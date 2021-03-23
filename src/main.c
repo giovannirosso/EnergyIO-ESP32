@@ -19,7 +19,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#define EXAMPLE_ESP_WIFI_SSID      "WifiTeste"
+#define EXAMPLE_ESP_WIFI_SSID      "WifiTesteABC"
 #define EXAMPLE_ESP_WIFI_PASS      "12345678"
 #define EXAMPLE_MAX_STA_CONN       (3)
 
