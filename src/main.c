@@ -15,6 +15,7 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"  //TODO: USAR ESSE
+#include <WifiStation.h>
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -79,6 +80,8 @@ void app_main()
       ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+
+    init("Liane_2G", "055A64F7", 3);
 
     ESP_LOGI(TAG, "ESP_WIFI_MODE_AP");
     wifi_init_softap();

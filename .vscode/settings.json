@@ -6,6 +6,8 @@
         "freertos.h": "c",
         "esp_system.h": "c",
         "esp_netif.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "sdkconfig.h": "c",
+        "wifistation.h": "c"
     }
 }

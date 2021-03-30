@@ -73,25 +73,10 @@ void init(char *ssid, char *password, int retries)
                                                         &args,
                                                         &instance_got_ip));
 
-    // wifi_config_t wifi_config = {
-    //     .sta = {
-    //         .ssid = ssid,
-    //         .password = password,
-
-    //         .pmf_cfg = {
-    //             .capable = true,
-    //             .required = false},
-    //     },
-    // };
-
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = ssid,
-            .password = password,
-            /* Setting a password implies station will connect to all security modes including WEP/WPA.
-             * However these modes are deprecated and not advisable to be used. Incase your Access point
-             * doesn't support WPA2, these mode can be enabled by commenting below line */
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+            .ssid = {ssid},
+            .password = {password},
 
             .pmf_cfg = {
                 .capable = true,
