@@ -17,6 +17,8 @@ void eventHandler(void *arg, esp_event_base_t event_base,
 {
     EventHandlerArgs *args = (EventHandlerArgs *)arg;
 
+    ESP_LOGI(TAG, "max retries: %d", args->maxRetries);
+
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
     {
         esp_wifi_connect();
@@ -35,10 +37,10 @@ void eventHandler(void *arg, esp_event_base_t event_base,
         else
         {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-        }
 #ifdef WIFI_STATION_DEBUG
-        ESP_LOGI(TAG, "connect to the AP fail");
+            ESP_LOGI(TAG, "connect to the AP fail");
 #endif
+        }
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
@@ -51,7 +53,7 @@ void eventHandler(void *arg, esp_event_base_t event_base,
     }
 }
 
-void init(char *ssid, char *password, int retries)
+void init(const char *ssid, const char *password, int retries)
 {
     s_wifi_event_group = xEventGroupCreate();
 
@@ -73,22 +75,40 @@ void init(char *ssid, char *password, int retries)
                                                         &args,
                                                         &instance_got_ip));
 
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = {ssid},
-            .password = {password},
+    // wifi_config_t wifi_config = {
+    //     .sta = {
+    //         .ssid = {ssid},
+    //         .password = {password},
 
-            .pmf_cfg = {
-                .capable = true,
-                .required = false},
-        },
-    };
+    //         .pmf_cfg = {
+    //             .capable = true,
+    //             .required = false},
+    //     },
+    // };
+
+    wifi_config_t wifi_config;
+    memset(&wifi_config, 0, sizeof(wifi_config_t));
+    strcpy((char *)wifi_config.sta.ssid, ssid);
+    wifi_config.sta.scan_method = WIFI_ALL_CHANNEL_SCAN; //force full scan to be able to choose the nearest / strongest AP
+
+    if (password)
+    {
+        if (strlen(password) == 64)
+        { // it's not a passphrase, is the PSK
+            memcpy((char *)wifi_config.sta.password, password, 64);
+        }
+        else
+        {
+            strcpy((char *)wifi_config.sta.password, password);
+        }
+    }
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
 #ifdef WIFI_STATION_DEBUG
+    ESP_LOGI(TAG, "wifi config ssid: %s password: %s", wifi_config.sta.ssid, wifi_config.sta.password);
     ESP_LOGI(TAG, "wifi_init_sta finished.");
 #endif
 }

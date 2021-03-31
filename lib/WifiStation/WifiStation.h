@@ -19,6 +19,11 @@
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
+#define WIFI_STATION_DEBUG
+
+#define EXAMPLE_ESP_WIFI_SSID "ALHN-6593"
+#define EXAMPLE_ESP_WIFI_PASS "Vdb4U5k-XA"
+
 typedef enum
 {
     CONNECTED,
@@ -40,7 +45,7 @@ void eventHandler(void *arg, esp_event_base_t event_base,
  * @param password Network's password which the esp will connect
  * @param retries Number of connection retries
  **/
-void init(char *ssid, char *password, int retries);
+void init(const char *ssid, const char *password, int retries);
 
 /**
  * Blocks execution until it gets a state response from eventHandler
