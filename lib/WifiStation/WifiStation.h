@@ -37,15 +37,15 @@ typedef struct
 } EventHandlerArgs;
 
 // FreeRTOS Signal handler
-void eventHandler(void *arg, esp_event_base_t event_base,
-                  int32_t event_id, void *event_data);
+void wifiStationEventHandler(void *arg, esp_event_base_t event_base,
+                             int32_t event_id, void *event_data);
 
 /** Inits a Wifi Station 
  * @param ssid Network's SSID which the esp will connect
  * @param password Network's password which the esp will connect
  * @param retries Number of connection retries
  **/
-void init(const char *ssid, const char *password, int retries);
+void wifiStationInit(const char *ssid, const char *password, int retries);
 
 /**
  * Blocks execution until it gets a state response from eventHandler

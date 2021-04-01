@@ -12,8 +12,8 @@ static esp_event_handler_instance_t instance_got_ip;
 static const char *TAG = "wifi station";
 #endif
 
-void eventHandler(void *arg, esp_event_base_t event_base,
-                  int32_t event_id, void *event_data)
+void wifiStationEventHandler(void *arg, esp_event_base_t event_base,
+                             int32_t event_id, void *event_data)
 {
     EventHandlerArgs *args = (EventHandlerArgs *)arg;
 
@@ -53,7 +53,7 @@ void eventHandler(void *arg, esp_event_base_t event_base,
     }
 }
 
-void init(const char *ssid, const char *password, int retries)
+void wifiStationInit(const char *ssid, const char *password, int retries)
 {
     s_wifi_event_group = xEventGroupCreate();
 
@@ -68,23 +68,12 @@ void init(const char *ssid, const char *password, int retries)
     EventHandlerArgs args = {
         .maxRetries = retries};
 
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &eventHandler, &args, &instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifiStationEventHandler, &args, &instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
                                                         IP_EVENT_STA_GOT_IP,
-                                                        &eventHandler,
+                                                        &wifiStationEventHandler,
                                                         &args,
                                                         &instance_got_ip));
-
-    // wifi_config_t wifi_config = {
-    //     .sta = {
-    //         .ssid = {ssid},
-    //         .password = {password},
-
-    //         .pmf_cfg = {
-    //             .capable = true,
-    //             .required = false},
-    //     },
-    // };
 
     wifi_config_t wifi_config;
     memset(&wifi_config, 0, sizeof(wifi_config_t));

@@ -9,6 +9,15 @@
         "stdint.h": "c",
         "sdkconfig.h": "c",
         "wifistation.h": "c",
-        "esp_event.h": "c"
+        "esp_event.h": "c",
+        "nvs_flash.h": "c",
+        "*.ipp": "c",
+        "*.tcc": "c",
+        "unordered_map": "c",
+        "fstream": "c",
+        "istream": "c",
+        "ostream": "c",
+        "sstream": "c",
+        "string_view": "c"
     }
 }

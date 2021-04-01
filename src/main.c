@@ -6,19 +6,24 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
-#include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "esp_system.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
+
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "esp_netif.h" //TODO: USAR ESSE
-#include <WifiStation.h>
 
-#include "lwip/err.h"
-#include "lwip/sys.h"
+#include <WifiStation.h>
+#include <MqttClient.h>
+
+#define CONFIG_BROKER_URL "mqtt://energyio.ml"
+
+void onMessage(message *msg)
+{
+    ESP_LOGI("main", "MQTT MESSAGE");
+
+    printf("data: %s\n", msg->data);
+    printf("topic: %s\n", msg->topic);
+}
 
 void app_main()
 {
@@ -31,10 +36,29 @@ void app_main()
     }
     ESP_ERROR_CHECK(ret);
 
-    init("ALHN-6593", "Vdb4U5k-XA", 10);
+    wifiStationInit("ALHN-6593", "Vdb4U5k-XA", 10);
 
     if (wifiState() != CONNECTED)
         ESP_LOGI("main", "not connected to wifi");
     else
         ESP_LOGI("main", "connected to wifi");
+
+    mqttInit("energyio.ml", 1883, "giogay");
+
+    setMqttCredentials("device", "HG7CrpAVuiLB7QD");
+    setOnMessageCallback(onMessage);
+
+    mqttStart();
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    subscribe("lidoburro", 0);
+
+    message msg = {
+        .data = "asdasd",
+        .topic = "giogay",
+        .length = strlen("asdasd"),
+    };
+
+    publish(&msg);
 }
