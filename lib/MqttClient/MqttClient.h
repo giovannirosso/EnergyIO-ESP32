@@ -24,9 +24,9 @@ typedef struct _message
 
 esp_mqtt_client_handle_t _client;
 
-typedef void (*onMessageCallback)(message *msg);
+typedef void (*onMessageCallback)(const char *topic, const char *data, int length);
 
-void (*_callback)(message *);
+void (*_callback)(const char *topic, const char *data, int length);
 
 /*
  * @brief Event handler registered to receive MQTT events

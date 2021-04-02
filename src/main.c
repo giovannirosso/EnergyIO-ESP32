@@ -17,12 +17,12 @@
 
 #define CONFIG_BROKER_URL "mqtt://energyio.ml"
 
-void onMessage(message *msg)
+void onMessage(const char *topic, const char *data, int length)
 {
     ESP_LOGI("main", "MQTT MESSAGE");
 
-    printf("data: %s\n", msg->data);
-    printf("topic: %s\n", msg->topic);
+    printf("data: %s\n", data);
+    printf("topic: %s\n", topic);
 }
 
 void app_main()

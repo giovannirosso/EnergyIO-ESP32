@@ -30,22 +30,7 @@ void mqttEventHandler(void *handler_args, esp_event_base_t base, int32_t event_i
         printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
         printf("DATA=%.*s\r\n", event->data_len, event->data);
 
-        // message msg;
-        // memset(&msg, 0, sizeof(message));
-
-        // strcpy(&msg.data, (const char *)event->data);
-        // strcpy(&msg.topic, (const char *)event->topic);
-        // msg.length = event->data_len;
-
-        message msg = {
-            .data = event->data,
-            .topic = event->topic,
-            .length = event->data_len,
-            .qos = 0,
-            .retain = false,
-        };
-
-        _callback(&msg);
+        _callback(event->topic, event->data, event->data_len);
 
         break;
     case MQTT_EVENT_ERROR:
