@@ -13,6 +13,16 @@
 #include "stdbool.h"
 #include <string.h>
 
+#include "freertos/event_groups.h"
+
+#define MQTT_CONNECTED_BIT BIT0
+#define MQTT_DISCONNECTED_BIT BIT1
+#define MQTT_ERROR_BIT BIT2
+
+typedef void (*onMessageCallback)(const char *topic, const char *data, int length);
+
+void (*_callback)(const char *topic, const char *data, int length);
+
 typedef struct _message
 {
     char *data;
@@ -22,11 +32,17 @@ typedef struct _message
     bool retain;
 } message;
 
+typedef enum
+{
+    MQTT_CONNECTED,
+    MQTT_DISCONNECTED,
+    MQTT_ERROR,
+    MQTT_TIMEOUT
+} MqttState;
+
 esp_mqtt_client_handle_t _client;
-
-typedef void (*onMessageCallback)(const char *topic, const char *data, int length);
-
-void (*_callback)(const char *topic, const char *data, int length);
+EventGroupHandle_t mqttEventGroup;
+MqttState mqttState;
 
 /*
  * @brief Event handler registered to receive MQTT events
@@ -72,5 +88,9 @@ int publish(message *message);
 int subscribe(const char *topic, uint8_t qos);
 
 int unsubscribe(const char *topic);
+
+MqttState waitForMqttState();
+
+MqttState getMqttState();
 
 #endif // MQTT_CLIENT_H

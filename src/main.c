@@ -101,7 +101,7 @@ void transmitter(void *pvParameters) //writing
 }
 #endif
 
-void onMessage(const char *topic, const char *data, int length)
+void onMessage(char *topic, char *data, int length)
 {
     ESP_LOGI("main", "MQTT MESSAGE");
 
@@ -129,20 +129,25 @@ void app_main()
 
     mqttInit("energyio.ml", 1883, CLIENT_ID);
 
+    ESP_LOGI("main", "after mqtt init");
+
     setMqttCredentials("device", "HG7CrpAVuiLB7QD");
     setOnMessageCallback(onMessage);
 
     mqttStart();
+    if (waitForMqttState() == MQTT_CONNECTED)
+    {
+        // vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     subscribe(TEST_TOPIC, 0);
 
-    message msg = {
-        .data = "asdasd",
-        .topic = "giogay",
-        .length = strlen("asdasd"),
-    };
+        message msg = {
+            .data = "asdasd",
+            .topic = "giogay",
+            .length = strlen("asdasd"),
+        };
 
     publish(&msg);
 

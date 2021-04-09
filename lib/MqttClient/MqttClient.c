@@ -11,9 +11,13 @@ void mqttEventHandler(void *handler_args, esp_event_base_t base, int32_t event_i
     {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+        xEventGroupSetBits(mqttEventGroup, MQTT_CONNECTED_BIT);
+        mqttState = MQTT_CONNECTED;
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+        xEventGroupSetBits(mqttEventGroup, MQTT_DISCONNECTED_BIT);
+        mqttState = MQTT_DISCONNECTED;
         break;
 
     case MQTT_EVENT_SUBSCRIBED:
@@ -29,12 +33,23 @@ void mqttEventHandler(void *handler_args, esp_event_base_t base, int32_t event_i
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
         printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
         printf("DATA=%.*s\r\n", event->data_len, event->data);
+        printf("DATA LEN=%d\r\n", event->data_len);
 
-        _callback(event->topic, event->data, event->data_len);
+        char *topic = (char *)malloc(sizeof(char) * event->topic_len + 1);
+        memset(topic, 0, event->topic_len + 1);
+        memcpy(topic, event->topic, event->topic_len);
+
+        char *data = (char *)malloc(sizeof(char) * event->data_len + 1);
+        memset(data, 0, event->data_len + 1);
+        memcpy(data, event->data, event->data_len);
+
+        _callback((const char *)topic, (const char *)data, event->data_len);
 
         break;
     case MQTT_EVENT_ERROR:
         ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+        xEventGroupSetBits(mqttEventGroup, MQTT_ERROR_BIT);
+        mqttState = MQTT_ERROR;
         break;
     default:
         ESP_LOGI(TAG, "Other event id:%d", event->event_id);
@@ -56,6 +71,10 @@ esp_mqtt_client_handle_t mqttInit(const char *host, int port, const char *client
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqttEventHandler, NULL);
 
     _client = client;
+
+    ESP_LOGI("mqtt", "before event group init");
+
+    mqttEventGroup = xEventGroupCreate();
 
     return client;
 }
@@ -98,4 +117,36 @@ int subscribe(const char *topic, uint8_t qos)
 int unsubscribe(const char *topic)
 {
     return esp_mqtt_client_unsubscribe(_client, topic);
+}
+
+MqttState waitForMqttState()
+{
+    vPortYield();
+    EventBits_t bits = xEventGroupWaitBits(mqttEventGroup,
+                                           MQTT_CONNECTED_BIT | MQTT_DISCONNECTED_BIT | MQTT_ERROR_BIT,
+                                           pdTRUE,
+                                           pdFALSE,
+                                           portMAX_DELAY);
+
+    if (bits & MQTT_CONNECTED_BIT)
+    {
+        return MQTT_CONNECTED;
+    }
+    else if (bits & MQTT_DISCONNECTED_BIT)
+    {
+        return MQTT_DISCONNECTED;
+    }
+    else if (bits & MQTT_ERROR_BIT)
+    {
+        return MQTT_ERROR;
+    }
+    else
+    {
+        return MQTT_TIMEOUT;
+    }
+}
+
+MqttState getMqttState()
+{
+    return mqttState;
 }
