@@ -476,6 +476,21 @@ rf24_crclength_e Nrf24_getCRCLength(NRF24_t * dev)
 	return result;
 }
 
+void Nrf24_setPALevel(NRF24_t * dev, uint8_t level)//, bool lnaEnable)
+{
+	uint8_t aux;
+	Nrf24_readRegister(dev, RF_SETUP, &aux, sizeof(aux));
+	printf("LEVEL PA -> %d", aux);
+    // if (level > 3) {                            // If invalid level, go to max PA
+    //     level = (RF24_PA_MAX << 1);// + lnaEnable; // +1 to support the SI24R1 chip extra bit
+    // } else {
+    //     level = (level << 1);// + lnaEnable;       // Else set level as requested
+    // }
+	aux = level;
+
+    Nrf24_writeRegister(dev, RF_SETUP, aux, sizeof(aux));   // Write it to the chip
+}
+
 uint8_t Nrf24_getPALevel(NRF24_t * dev)
 {
 	uint8_t level;

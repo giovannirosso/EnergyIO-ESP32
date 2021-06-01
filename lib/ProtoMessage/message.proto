@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+enum DataType 
+{   
+    data0 = 0;
+    data1 = 1;
+    data2 = 2;
+    data3 = 3;
+}
+
+message userData{
+    uint32 user = 1;
+    DataType type = 2;
+    string data = 3;
+}

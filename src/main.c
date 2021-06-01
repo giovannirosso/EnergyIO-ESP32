@@ -7,6 +7,7 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "constants.h"
 #include "esp_netif.h" //TODO: USAR ESSE
 
 #include "nRF24.h"
@@ -14,14 +15,6 @@
 #include <WifiStation.h>
 #include <MqttClient.h>
 
-#define CONFIG_BROKER_URL "mqtt://energyio.ml"
-#define SSID "Liane_2G"
-#define PASSWORD "055A64F7"
-#define CLIENT_ID "MelloGay"
-#define TEST_TOPIC "test"
-
-// #define RECEIVER
-#define TRANSMITTER
 typedef union
 {
     uint8_t value[4];
@@ -77,14 +70,17 @@ void transmitter(void *pvParameters) //writing
 
     Nrf24_setRADDR(&dev, (uint8_t *)"ABCDE");
     uint8_t payload = sizeof(mydata.value);
-    uint8_t channel = 90;
+    uint8_t channel = 1;
+
+    Nrf24_SetSpeedDataRates(&dev, RF24_250KBPS);
+    Nrf24_SetOutputRF_PWR(&dev, RF24_PA_MAX);
     Nrf24_config(&dev, channel, payload);
     Nrf24_printDetails(&dev);
 
     while (1)
     {
-        mydata.now_time = 123456789;//xTaskGetTickCount();
-        Nrf24_setTADDR(&dev, (uint8_t *)"FGHIJ");  //Set the receiver address
+        mydata.now_time = 123456789;              //xTaskGetTickCount();
+        Nrf24_setTADDR(&dev, (uint8_t *)"FGHIJ"); //Set the receiver address
         Nrf24_send(&dev, mydata.value);           //Send instructions, send random number value
         vTaskDelay(1);
         ESP_LOGI(pcTaskGetTaskName(0), "Wait for sending.....");
@@ -101,7 +97,7 @@ void transmitter(void *pvParameters) //writing
 }
 #endif
 
-void onMessage(char *topic, char *data, int length)
+void onMessage(const char *topic, const char *data, int length)
 {
     ESP_LOGI("main", "MQTT MESSAGE");
 
@@ -127,11 +123,11 @@ void app_main()
     else
         ESP_LOGI("main", "connected to wifi");
 
-    mqttInit("energyio.ml", 1883, CLIENT_ID);
+    mqttInit(MQTT_HOST, MQTT_PORT, CLIENT_ID);
 
     ESP_LOGI("main", "after mqtt init");
 
-    setMqttCredentials("device", "HG7CrpAVuiLB7QD");
+    setMqttCredentials(MQTT_USER, MQTT_PASS);
     setOnMessageCallback(onMessage);
 
     mqttStart();
@@ -139,17 +135,16 @@ void app_main()
     {
         // vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-    subscribe(TEST_TOPIC, 0);
+        subscribe(TOPIC_TEST_REQUEST, 0);
 
         message msg = {
-            .data = "asdasd",
-            .topic = "giogay",
-            .length = strlen("asdasd"),
+            .data = "TESTE",
+            .topic = TOPIC_TEST_REPORT,
+            .length = strlen("TESTE"),
         };
 
-    publish(&msg);
+        publish(&msg);
+    }
 
 #if defined(RECEIVER)
     // Create Task
