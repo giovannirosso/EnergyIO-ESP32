@@ -182,6 +182,7 @@ rf24_datarate_e Nrf24_getDataRate(NRF24_t * dev);
 rf24_crclength_e Nrf24_getCRCLength(NRF24_t * dev);
 uint8_t Nrf24_getPALevel(NRF24_t * dev);
 void Nrf24_setPALevel(NRF24_t * dev, uint8_t level);//, bool lnaEnable);
+void Nrf24_setCRCLength(NRF24_t * dev, uint8_t length);
 
 #endif
 

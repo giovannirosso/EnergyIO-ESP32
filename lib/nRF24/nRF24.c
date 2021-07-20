@@ -77,7 +77,7 @@ void spi_master_init(NRF24_t * dev, int8_t ce_pin, int8_t csn_pin, int miso_pin,
 #endif
 
 	spi_device_handle_t handle;
-	ret = spi_bus_add_device( LCD_HOST, &devcfg, &handle);
+	ret = spi_bus_add_device( HSPI_HOST, &devcfg, &handle);
 	ESP_LOGI(TAG, "spi_bus_add_device=%d",ret);
 	assert(ret==ESP_OK);
 	dev->cePin = ce_pin;
@@ -489,6 +489,26 @@ void Nrf24_setPALevel(NRF24_t * dev, uint8_t level)//, bool lnaEnable)
 	aux = level;
 
     Nrf24_writeRegister(dev, RF_SETUP, aux, sizeof(aux));   // Write it to the chip
+}
+
+void Nrf24_setCRCLength(NRF24_t * dev, uint8_t length)
+{
+
+	uint8_t config_reg;
+	Nrf24_readRegister(dev, RF_SETUP, &config_reg, sizeof(config_reg));
+	printf("setCRCLength -> %d", config_reg);
+    //config_reg &= ~(_BV(CRCO) | _BV(EN_CRC));
+
+    // switch uses RAM (evil!)
+    // if (length == RF24_CRC_DISABLED) {
+    //     // Do nothing, we turned it off above.
+    // } else if (length == RF24_CRC_8) {
+    //     config_reg |= _BV(EN_CRC);
+    // } else {
+    //     config_reg |= _BV(EN_CRC);
+    //     config_reg |= _BV(CRCO);
+    // }
+	Nrf24_writeRegister(dev, RF_SETUP, length, sizeof(length));
 }
 
 uint8_t Nrf24_getPALevel(NRF24_t * dev)

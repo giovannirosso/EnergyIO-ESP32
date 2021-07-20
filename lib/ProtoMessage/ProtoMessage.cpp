@@ -39,3 +39,16 @@ Message::Message(int _user, DataType _type, char *_data)
 
   this->length = stream.bytes_written;
 }
+
+void Message::r_userData()
+{
+  userData msg userData_init_zero;
+  pb_istream_t stream = pb_istream_from_buffer(this->dado, this->length);
+  pb_decode(&stream, userData_fields, &msg);
+  
+  printf("User :%d", msg.user);
+  printf("DataType: %d", msg.type);
+  printf("Data: %s", msg.data);
+
+  this->user = msg.user;
+}

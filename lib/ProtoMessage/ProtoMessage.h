@@ -26,7 +26,9 @@ class Message
     Message(uint8_t *data, uint16_t length); // construtor genérico
     ~Message();
 
-    Message(int _user, DataType _type, char *_data);																//construtor confirmation
+    Message(int _user, DataType _type, char *_data);	
+    
+    void r_userData();														//construtor confirmation
 };
 
 #endif //PROTOMESSAGE_H

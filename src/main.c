@@ -25,7 +25,7 @@ typedef union
 #define CONFIG_CSN_GPIO 5
 #define CONFIG_MISO_GPIO 19
 #define CONFIG_MOSI_GPIO 23
-#define CONFIG_SCLK_GPIO 18
+#define CONFIG_SCK_GPIO 18
 
 MYDATA_t mydata;
 
@@ -37,11 +37,13 @@ void receiver(void *pvParameters) //Reading
     ESP_LOGI(pcTaskGetTaskName(0), "Start");
     ESP_LOGI(pcTaskGetTaskName(0), "CONFIG_CE_GPIO=%d", CONFIG_CE_GPIO);
     ESP_LOGI(pcTaskGetTaskName(0), "CONFIG_CSN_GPIO=%d", CONFIG_CSN_GPIO);
-    spi_master_init(&dev, CONFIG_CE_GPIO, CONFIG_CSN_GPIO, CONFIG_MISO_GPIO, CONFIG_MOSI_GPIO, CONFIG_SCLK_GPIO);
+    spi_master_init(&dev, CONFIG_CE_GPIO, CONFIG_CSN_GPIO, CONFIG_MISO_GPIO, CONFIG_MOSI_GPIO, CONFIG_SCK_GPIO);
 
     Nrf24_setRADDR(&dev, (uint8_t *)"FGHIJ");
     uint8_t payload = sizeof(mydata.now_time);
-    uint8_t channel = 90;
+    uint8_t channel = 1;
+    Nrf24_SetSpeedDataRates(&dev, RF24_250KBPS);
+    Nrf24_SetOutputRF_PWR(&dev, RF24_PA_MAX);
     Nrf24_config(&dev, channel, payload);
     Nrf24_printDetails(&dev);
     ESP_LOGI(pcTaskGetTaskName(0), "Listening...");
@@ -50,7 +52,7 @@ void receiver(void *pvParameters) //Reading
     {
         if (Nrf24_dataReady(&dev))
         { //When the program is received, the received data is output from the serial port
-            Nrf24_getData(&dev, mydata.now_time);
+            Nrf24_getData(&dev, mydata.value);
             ESP_LOGI(pcTaskGetTaskName(0), "Got data:%lu", mydata.now_time);
         }
         vTaskDelay(1);
@@ -66,7 +68,7 @@ void transmitter(void *pvParameters) //writing
     ESP_LOGI(pcTaskGetTaskName(0), "Start");
     ESP_LOGI(pcTaskGetTaskName(0), "CONFIG_CE_GPIO=%d", CONFIG_CE_GPIO);
     ESP_LOGI(pcTaskGetTaskName(0), "CONFIG_CSN_GPIO=%d", CONFIG_CSN_GPIO);
-    spi_master_init(&dev, CONFIG_CE_GPIO, CONFIG_CSN_GPIO, CONFIG_MISO_GPIO, CONFIG_MOSI_GPIO, CONFIG_SCLK_GPIO);
+    spi_master_init(&dev, CONFIG_CE_GPIO, CONFIG_CSN_GPIO, CONFIG_MISO_GPIO, CONFIG_MOSI_GPIO, CONFIG_SCK_GPIO);
 
     Nrf24_setRADDR(&dev, (uint8_t *)"ABCDE");
     uint8_t payload = sizeof(mydata.value);
@@ -74,6 +76,7 @@ void transmitter(void *pvParameters) //writing
 
     Nrf24_SetSpeedDataRates(&dev, RF24_250KBPS);
     Nrf24_SetOutputRF_PWR(&dev, RF24_PA_MAX);
+    //Nrf24_setCRCLength(&dev, RF24_CRC_16);
     Nrf24_config(&dev, channel, payload);
     Nrf24_printDetails(&dev);
 
@@ -146,13 +149,13 @@ void app_main()
         publish(&msg);
     }
 
-#if defined(RECEIVER)
-    // Create Task
-    xTaskCreate(receiver, "RECV", 1024 * 2, NULL, 2, NULL);
-#endif
-
 #if defined(TRANSMITTER)
     // Create Task
     xTaskCreate(transmitter, "TRANS", 1024 * 2, NULL, 2, NULL);
+#endif
+
+#if defined(RECEIVER)
+    // Create Task
+    xTaskCreate(receiver, "RECV", 1024 * 2, NULL, 2, NULL);
 #endif
 }
