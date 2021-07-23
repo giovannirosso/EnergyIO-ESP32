@@ -18,8 +18,4 @@
 #define TOPIC_TEST_REQUEST "test/request"
 #define TOPIC_TEST_REPORT "test/report"
 
-//parte da sintaxe do protocolo de mensagens
-#define SEPARATOR ':'
-#define ENDOFMESSAGE ';'
-
 #endif

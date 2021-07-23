@@ -3,11 +3,11 @@
 void Control::init()
 {
     pinMode(LED1, OUTPUT);
-    digitalWrite(LED1, HIGH);
+    digitalWrite(LED1, LOW);
     pinMode(LED2, OUTPUT);
-    digitalWrite(LED2, HIGH);
+    digitalWrite(LED2, LOW);
     pinMode(LED3, OUTPUT);
-    digitalWrite(LED3, HIGH);
+    digitalWrite(LED3, LOW);
 
     pinMode(SW1, INPUT_PULLUP);
     pinMode(SW2, INPUT_PULLUP);
@@ -17,30 +17,30 @@ void Control::init()
 
 void Control::led1(bool on)
 {
-    digitalWrite(LED1, on ? HIGH : LOW);
+    digitalWrite(LED1, on ? LOW : HIGH);
 }
 
 bool Control::led1()
 {
-    return digitalRead(LED1) == HIGH;
+    return digitalRead(LED1) == LOW;
 }
 
 void Control::led2(bool on)
 {
-    digitalWrite(LED2, on ? HIGH : LOW);
+    digitalWrite(LED2, on ? LOW : HIGH);
 }
 
 bool Control::led2()
 {
-    return digitalRead(LED2) == HIGH;
+    return digitalRead(LED2) == LOW;
 }
 
 void Control::led3(bool on)
 {
-    digitalWrite(LED3, on ? HIGH : LOW);
+    digitalWrite(LED3, on ? LOW : HIGH);
 }
 
 bool Control::led3()
 {
-    return digitalRead(LED3) == HIGH;
+    return digitalRead(LED3) == LOW;
 }
