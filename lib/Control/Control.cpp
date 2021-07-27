@@ -12,7 +12,7 @@ void Control::init()
     pinMode(SW1, INPUT_PULLUP);
     pinMode(SW2, INPUT_PULLUP);
     pinMode(SW3, INPUT_PULLUP);
-    Serial.println("INIT");
+    Serial.println("[CONTROL] INIT");
 }
 
 void Control::led1(bool on)

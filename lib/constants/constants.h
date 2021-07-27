@@ -5,6 +5,10 @@
 // #define RECEIVER
 // #define TRANSMITTER
 
+#define WIFI_RETRY_TIME_MS 30000
+#define WIFI_CONNECTION_STATUS 60000
+#define WIFI_TIMEOUT_MS 15000
+
 #define MQTT_HOST "energyio.ml"
 #define MQTT_PORT 1883
 #define MQTT_USER "device"
