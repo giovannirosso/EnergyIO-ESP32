@@ -23,7 +23,7 @@ public:
     void onMessage(String topic, byte *payload, unsigned int length);
     bool connect();
     bool connect(String host, int port);
-    //void send(char *topic, Message *msg);
+    // void send(char *topic, Message *msg);
     void subscribe(String topic);
     PubSubClient *getPubSubClient();
 };
