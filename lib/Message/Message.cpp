@@ -1,4 +1,4 @@
-#include "ProtoMessage.h"
+#include "Message.h"
 
 // ---------------------------------------CONTRUTOR GENÉRICO
 Message::Message(uint8_t *_data, uint16_t _length)
@@ -9,9 +9,37 @@ Message::Message(uint8_t *_data, uint16_t _length)
   this->user = NULL;
 }
 
+Message::Message(char *_data, uint16_t _length)
+{
+  this->dado = (uint8_t *)_data;
+  this->length = _length;
+
+  this->user = NULL;
+}
+
 Message::~Message()
 {
   // delete[] this->
+}
+
+void Message::deleteData()
+{
+  delete[] data;
+}
+
+byte *Message::getMessage()
+{
+  return this->data;
+}
+
+uint16_t Message::getLength()
+{
+  return this->length;
+}
+
+int Message::getUser()
+{
+  return this->user;
 }
 
 //-------------------Serial
@@ -45,7 +73,7 @@ void Message::r_userData()
   userData msg userData_init_zero;
   pb_istream_t stream = pb_istream_from_buffer(this->dado, this->length);
   pb_decode(&stream, userData_fields, &msg);
-  
+
   printf("User :%d", msg.user);
   printf("DataType: %d", msg.type);
   printf("Data: %s", msg.data);

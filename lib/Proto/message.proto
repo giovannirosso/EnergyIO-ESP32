@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+/**
+* Mensagem com dado de medição de um sensor 
+*
+* Rota associada `sensor/{serial}/data/report`
+* @param datetime {number} timestamp da hora da medição em formato UNIX
+* @param data {number}  dado da medição
+*/
+message DataReport {
+    uint64 datetime = 1;
+    double data = 2;
+}
+
+/**
+* Mensagem para registrar um módulo Slave
+*
+* Rota associada `master/{serial}/sensor/register`
+* @param type {SlaveType} tipo do sensor
+* @param number {number} número associado ao sensor
+* @param serial {string} serial identificador
+*/
+message SlaveRegister {
+    SlaveType type = 1;
+    int32 number = 2;
+    string serial = 3;
+}
+
+/**
+* Mensagem para registrar um módulo Master
+*
+* @param serial {string} segredo para registrar um módulo
+* @param mac_address {string} endereço MAC do master
+*/
+message MasterRegister {
+    string serial = 1;
+    string mac_address = 2;
+}
+
+
+
+
+
+enum SlaveType {
+    WATER = 0;
+    ENERGY = 1;
+}

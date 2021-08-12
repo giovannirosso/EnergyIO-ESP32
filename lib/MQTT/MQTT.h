@@ -1,31 +1,38 @@
 #ifndef MQTT_H
-#define MQTT_H
-
+#define HMQTT_H
+#include <Arduino.h>
 #include <constants.h>
 
 #include <WiFiClient.h>
-#include <PubSubClient.h>
-
-#define MQTT_MAX_PACKET_SIZE 256
-
+#include <AsyncMqttClient.h>
+#include "Message.h"
+#include "Configuration.h"
 class MQTT
 {
 private:
     static char *host;
     static int port;
-    PubSubClient pubSubClient;
+    AsyncMqttClient mqttClient;
+    bool connected;
 
 public:
-    MQTT(WiFiClient &espClient);
+    MQTT();
 
     // MQTT();
     ~MQTT();
-    void onMessage(String topic, byte *payload, unsigned int length);
+    void onMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
+    void onMqttConnect(bool sessionPresent);
+    void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
+    // void onMqttSubscribe(uint16_t packetId, uint8_t qos);
+    // void onMqttPublish(uint16_t packetId);
     bool connect();
-    bool connect(String host, int port);
-    // void send(char *topic, Message *msg);
-    void subscribe(String topic);
-    PubSubClient *getPubSubClient();
+    void send(char *topic, Message *msg);
+    void subscribe(char *topic);
+    void subscribeALL();
+    void panelSend(char *topic, Message *msg);
+    void panelSubscribe(char *topic);
+    AsyncMqttClient *getMqttClient();
+    void OTAReturnCallback(int user, bool status);
 };
 
 #endif //MQTT_H

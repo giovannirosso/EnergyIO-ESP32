@@ -1,14 +1,23 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define ESP32#define RECEIVER true
+#include <Arduino.h>
+
+#define ESP32
+#define RECEIVER true
 // #define TRANSMITTER
 
 #define CHANNEL 1 //127
 
+#define FIRMWARE_VERSION "v1.0"
+
 #define WIFI_RETRY_TIME_MS 30000
 #define WIFI_CONNECTION_STATUS 60000
 #define WIFI_TIMEOUT_MS 15000
+
+#define MQTT_MAX_PACKET_SIZE 256
+#define MQTT_SOCKET_TIMEOUT 10000
+#define MQTT_KEEPALIVE 60
 
 #define MQTT_HOST "energyio.ml"
 #define MQTT_PORT 1883

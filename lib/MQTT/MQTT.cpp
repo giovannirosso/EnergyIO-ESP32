@@ -2,73 +2,148 @@
 #include "constants.h"
 #include "WString.h"
 
-MQTT::MQTT(WiFiClient &espClient)
+void onMqttSubscribe(uint16_t packetId, uint8_t qos)
 {
-    // pubSubClient = new PubSubClient(MQTT_HOST, MQTT_PORT, espClient);
-    this->pubSubClient.setClient(espClient);
+    Serial.println("Subscribe acknowledged.");
+    Serial.print("  packetId: ");
+    Serial.println(packetId);
+    Serial.print("  qos: ");
+    Serial.println(qos);
+}
 
-    randomSeed(micros());
+void onMqttPublish(uint16_t packetId)
+{
+    Serial.println("Publish acknowledged.");
+    Serial.print("  packetId: ");
+    Serial.println(packetId);
+}
+
+MQTT::MQTT()
+{
+    this->mqttClient.setKeepAlive(MQTT_KEEPALIVE);
+    this->mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+    this->mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
+    this->mqttClient.onSubscribe(onMqttSubscribe);
+    this->mqttClient.onPublish(onMqttPublish);
+    // this->mqttClient.setSecure(MQTT_SECURE);
+    // this->mqttClient.addServerFingerprint(mqttCertFingerprint);
 }
 
 MQTT::~MQTT()
 {
-    this->pubSubClient.disconnect();
+    this->mqttClient.disconnect();
 }
 
-void MQTT::onMessage(String topic, byte *payload, unsigned int length)
+void MQTT::onMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
 {
-    if (this->pubSubClient.connected())
+    Serial.println("Publish received.");
+    Serial.print("  topic: ");
+    Serial.println(topic);
+    Serial.print("  qos: ");
+    Serial.println(properties.qos);
+    Serial.print("  dup: ");
+    Serial.println(properties.dup);
+    Serial.print("  retain: ");
+    Serial.println(properties.retain);
+    Serial.print("  len: ");
+    Serial.println(len);
+    Serial.print("  index: ");
+    Serial.println(index);
+    Serial.print("  total: ");
+    Serial.println(total);
+
+    if (this->mqttClient.connected())
     {
-        Serial.println("pubSubClient.connected()");
-        if (length > 0)
+        DPRINTLN("pubSubClient.connected()");
+        if (len > 0)
         {
-            // if (message != NULL)
-            // {
-            //     delete message;
-            //     Serial.println("Deleted");
-            // }
+            Message *message = NULL;
+            Message income(payload, len);
+            if (String(topic) == "device/" + String() + "/" + TOPIC_TEST_REQUEST)
+            {
+            }
+            else if (String(topic) == "device/" + String() + "/" + TOPIC_TEST_REQUEST)
+            {
+            }
+            if (message != NULL)
+            {
+                delete message;
+                DPRINTLN("Deleted");
+            }
         }
     }
+}
+
+void MQTT::send(char *topic, Message *msg)
+{
+    String _topic = "device/" + (String)Configuration::getSerial() + "/" + (String)topic;
+    this->mqttClient.publish(_topic.c_str(), 0, false, (const char *)msg->getMessage(), msg->getLength());
+}
+
+void MQTT::panelSend(char *topic, Message *msg)
+{
+    String _topic = "panel/" + (String)Configuration::getSerial() + "/" + (String)topic;
+    this->mqttClient.publish(_topic.c_str(), 0, false, (const char *)msg->getMessage(), msg->getLength());
+}
+
+void MQTT::panelSubscribe(char *topic)
+{
+    String _topic = "panel/" + (String)Configuration::getSerial() + "/" + (String)topic;
+    this->mqttClient.subscribe(_topic.c_str(), 0);
+}
+
+void MQTT::subscribe(char *topic)
+{
+    String _topic = "device/" + (String)Configuration::getSerial() + "/" + (String)topic;
+    this->mqttClient.subscribe(_topic.c_str(), 0);
+}
+
+AsyncMqttClient *MQTT::getMqttClient()
+{
+    return &this->mqttClient;
+}
+
+void MQTT::onMqttConnect(bool sessionPresent)
+{
+    Serial.println("Connected to MQTT.");
+    Serial.print("Session present: ");
+    Serial.println(sessionPresent);
+    subscribeALL();
+}
+
+void MQTT::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
+{
+    Serial.println("Disconnected from MQTT.");
+
+    if (reason == AsyncMqttClientDisconnectReason::TLS_BAD_FINGERPRINT)
+    {
+        Serial.println("Bad server fingerprint.");
+    }
+}
+
+void MQTT::subscribeALL()
+{
+    subscribe(TOPIC_TEST_REQUEST);
 }
 
 bool MQTT::connect()
 {
-    if (!this->pubSubClient.connected())
+    if (!this->mqttClient.connected())
     {
-        Serial.printf("[MQTT] Attempting MQTT connection...");
+        String ClientId = DEVICE_TYPE;
+        ClientId += "-";
+        ClientId += String(Configuration::getSerial());
+        Serial.println(ClientId.c_str());
 
-        String pubSubClientId = CLIENT_ID;
+        this->mqttClient.setClientId(ClientId.c_str());
+        this->mqttClient.connect();
 
-        if (this->pubSubClient.connect(pubSubClientId.c_str(), MQTT_USER, MQTT_PASS))
-        {
-            Serial.println("[MQTT] Connected");
-
-            subscribe(TOPIC_TEST_REQUEST);
-
+        unsigned long start = millis();
+        while (!this->mqttClient.connected() && (unsigned long)(millis()) - start <= MQTT_SOCKET_TIMEOUT)
+            vTaskDelay(250 / portTICK_RATE_MS);
+        if (this->mqttClient.connected())
             return true;
-        }
         else
-        {
-            Serial.printf("[MQTT] failed, rc=");
-            Serial.println(this->pubSubClient.state());
             return false;
-        }
     }
-}
-
-// void MQTT::send(char *topic, Message *msg)
-// {
-//     String _topic = "device/" + "SERIAL" + "/" + (String)topic;
-//     this->pubSubClient.publish(_topic.c_str(), msg->getMessage(), msg->getLength());
-// }
-
-void MQTT::subscribe(String topic)
-{
-    String _topic = "device/" + topic;
-    this->pubSubClient.subscribe(_topic.c_str());
-}
-
-PubSubClient *MQTT::getPubSubClient()
-{
-    return &this->pubSubClient;
 }
