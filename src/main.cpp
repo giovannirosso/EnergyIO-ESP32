@@ -1,6 +1,7 @@
 #include "Control.h"
 #include "MQTT.h"
 #include "constants.h"
+#include "Ticker.h"
 #include "WiFi.h"
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
@@ -18,12 +19,11 @@ WiFiClient espClient;
 MQTT *mqttClient;
 RF24 nrfClient(4, 5);
 
-SemaphoreHandle_t sema_MQTT_KeepAlive;
+Ticker mqttReconnectTicker;
 
-TaskHandle_t blinkHandler, connectionHandler, mqttHandler, nrfHandler;
+SemaphoreHandle_t sema_SoftAP;
 
-bool shouldConnectToInternet = false;
-bool shouldConnectToServer = false;
+TaskHandle_t blinkHandler, wifiHandler, nrfHandler;
 
 bool reset = false;
 unsigned long debouncing_time = 200; //Debouncing Time in Milliseconds
@@ -70,15 +70,16 @@ void onMqttConnect(bool sessionPresent)
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 {
   mqttClient->onMqttDisconnect(reason);
+  mqttReconnectTicker.once_ms(MQTT_RETRY_TIME_MS, TaskServer);
 }
 
 time_t setClock()
 {
   configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-  DPRINT("Waiting for NTP time sync: ");
+  DPRINT("[NTP TIME] Waiting for NTP time sync: ");
   time_t NTPtime = time(nullptr);
   unsigned long start = millis();
-  int timeout = 120 * 1000; //2 min
+  int timeout = 30 * 1000;
   while (NTPtime < 8 * 3600 * 2 && (unsigned long)(millis()) - start < timeout)
   {
     delay(250);
@@ -88,7 +89,7 @@ time_t setClock()
   DPRINTLN("");
   struct tm timeinfo;
   gmtime_r(&NTPtime, &timeinfo);
-  DPRINT("Current time: ");
+  DPRINT("[NTP TIME] Current time: ");
   DPRINT(asctime(&timeinfo));
   return NTPtime;
 }
@@ -99,8 +100,11 @@ void TaskBlink(void *pvParameters) // This is a task.
 
   for (;;)
   {
-    if (WiFi.status() == WL_CONNECTED)
+    if (WiFi.status() == WL_CONNECTED && mqttClient->getMqttClient()->connected())
+    {
+      Serial.println("[LED] Task Suspended");
       vTaskSuspend(NULL);
+    }
     else
     {
       Control::led1(!Control::led1());
@@ -109,18 +113,39 @@ void TaskBlink(void *pvParameters) // This is a task.
   }
 }
 
+void WifiDisconnected(WiFiEvent_t event)
+{
+  Serial.println("[WIFI] Disconnected from WiFi");
+  mqttClient->getMqttClient()->disconnect();
+  WiFi.removeEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
+  vTaskResume(wifiHandler);
+  vTaskResume(blinkHandler);
+}
+
+void WifiGotIp(WiFiEvent_t event)
+{
+  Serial.print("[WIFI] Obtained IP address: ");
+  Serial.println(WiFi.localIP());
+  WiFi.onEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
+  TaskServer();
+}
+
 void TaskWifi(void *pvParameters)
 {
-  Serial.printf("[WIFI] mode set to WIFI_STA %s\n", WiFi.mode(WIFI_STA) ? "OK" : "Failed!");
-  WiFi.begin(SSID_LOCAL, PASSWORD_LOCAL);
-  DPRINTLN("[WIFI] Connecting to " + String(SSID_LOCAL));
+  WiFi.onEvent(WifiGotIp, SYSTEM_EVENT_STA_GOT_IP);
+  // Serial.printf("[WIFI] mode set to WIFI_STA %s\n", WiFi.mode(WIFI_MODE_STA) ? "OK" : "Failed!");
   for (;;)
   {
     if (WiFi.status() == WL_CONNECTED)
     {
-      vTaskDelay(10000 / portTICK_PERIOD_MS);
-      continue;
+      Serial.println("[WIFI] Task Suspended");
+      vTaskSuspend(NULL);
+      // vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
+
+    WiFi.begin(Configuration::getLocalSsid(), Configuration::getLocalPassword());
+    DPRINTLN("[WIFI] Connecting to " + String(Configuration::getLocalSsid()));
+    Serial.printf("[WIFI] MODE: %d\n", WiFi.getMode());
 
     unsigned long startAttemptTime = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < WIFI_TIMEOUT_MS)
@@ -132,40 +157,11 @@ void TaskWifi(void *pvParameters)
 
     if (WiFi.status() != WL_CONNECTED)
     {
-      Serial.println("[WIFI] Failed ");
-      shouldConnectToInternet = true;
-      shouldConnectToServer = false;
+      Serial.println("[WIFI] Connection failed, retry in 60s");
       vTaskResume(blinkHandler);
       vTaskDelay(WIFI_RETRY_TIME_MS / portTICK_PERIOD_MS);
-      continue;
     }
-
-    Serial.println("[WIFI] Connected ");
-    shouldConnectToInternet = false;
-    shouldConnectToServer = true;
-    TaskServer();
-    // vTaskResume(mqttHandler);
   }
-}
-
-void MQTTkeepalive(void *pvParameters)
-{
-  // mqttClient->getPubSubClient()->setKeepAlive(90);
-  // for (;;)
-  // {
-  //   if ((espClient.connected()) && (WiFi.status() == WL_CONNECTED))
-  //   {
-  //     xSemaphoreTake(sema_MQTT_KeepAlive, portMAX_DELAY); // whiles mqttClient.loop() is running no other mqtt operations should be in process
-  //     mqttClient->getPubSubClient()->loop();
-  //     xSemaphoreGive(sema_MQTT_KeepAlive);
-  //   }
-  //   else
-  //   {
-  //     Serial.println("[MQTT] Task Suspended");
-  //     vTaskSuspend(mqttHandler);
-  //   }
-  //   vTaskDelay(250); //task runs approx every 250 mS
-  // }
   // vTaskDelete(NULL);
 }
 
@@ -184,31 +180,29 @@ void TaskNRF(void *pvParameters)
 
 void TaskServer() //void *pvParameters
 {
-  setClock();
-  Serial.println("[MQTT] Trying to connect to server ");
-  Serial.println("[MQTT] " + (String)MQTT_HOST);
-  Serial.printf("[MQTT] WiFi PORT: %d\n", MQTT_PORT);
+  mqttReconnectTicker.detach();
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    setClock();
+    Serial.println("[MQTT] Trying to connect to server ");
+    Serial.println("[MQTT] " + (String)MQTT_HOST);
+    Serial.printf("[MQTT] MQTT PORT: %d\n", MQTT_PORT);
 
-  if (mqttClient->getMqttClient()->connected())
-  {
-    Serial.println("[MQTT] mqttClient-> disconnect ");
-    mqttClient->getMqttClient()->disconnect();
-  }
-
-  if (mqttClient->connect())
-  {
-    Serial.println("[MQTT] Connected to server ");
-    shouldConnectToServer = false;
-    Control::led1(true);
-    // vTaskResume(mqttHandler); //TODO:
-    // Message message(NULL, message_type::message_type_CONFIRMATION, false);
-    // mqttClient->send(TOPIC_CONFIRMATION_REPORT, &message);
-  }
-  else
-  {
-    Serial.println("[MQTT] Failed to connect to server");
-    mqttClient->getMqttClient()->disconnect();
-    vTaskResume(blinkHandler);
+    if (mqttClient->getMqttClient()->connected())
+    {
+      mqttClient->getMqttClient()->disconnect();
+    }
+    if (mqttClient->connect())
+    {
+      Control::led1(true);
+      Serial.println("[MQTT] CONNECTED");
+    }
+    else
+    {
+      Serial.println("[MQTT] Failed to connect to server");
+      mqttClient->getMqttClient()->disconnect();
+      vTaskResume(blinkHandler);
+    }
   }
 }
 
@@ -276,11 +270,11 @@ void setup()
   mqttClient->getMqttClient()->onConnect(onMqttConnect);
   mqttClient->getMqttClient()->onDisconnect(onMqttDisconnect);
 
-  sema_MQTT_KeepAlive = xSemaphoreCreateBinary();
-  xSemaphoreGive(sema_MQTT_KeepAlive);
+  sema_SoftAP = xSemaphoreCreateBinary();
+  xSemaphoreGive(sema_SoftAP);
 
   xTaskCreatePinnedToCore(TaskBlink, "TaskBlink", 1024, NULL, 1, &blinkHandler, 1);
-  xTaskCreatePinnedToCore(TaskWifi, "TaskWifi", 1024 * 16, NULL, 3, &connectionHandler, 0);
+  xTaskCreatePinnedToCore(TaskWifi, "TaskWifi", 1024 * 16, NULL, 3, &wifiHandler, 0);
   // xTaskCreatePinnedToCore(MQTTkeepalive, "MQTTkeepalive", 1024 * 16, NULL, 3, &mqttHandler, 1);
   // xTaskCreatePinnedToCore(TaskNRF, "TaskNRF", 1024, NULL, 2, &nrfHandler, 1);
 
@@ -307,7 +301,4 @@ void loop()
     }
     reset = false;
   }
-
-  if (shouldConnectToServer)
-    TaskServer();
 }
