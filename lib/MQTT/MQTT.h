@@ -4,35 +4,33 @@
 #include <constants.h>
 
 #include <WiFiClient.h>
-#include <AsyncMqttClient.h>
 #include "Message.h"
 #include "Configuration.h"
+#include "certs.h"
+
+#include "mqtt_client.h"
+
+#define TAG "MINDTECH_MQTT"
 class MQTT
 {
 private:
-    static char *host;
-    static int port;
-    AsyncMqttClient mqttClient;
-    bool connected;
+    esp_mqtt_client_handle_t mqttClient;
 
 public:
     MQTT();
-
-    // MQTT();
     ~MQTT();
-    void onMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
-    void onMqttConnect(bool sessionPresent);
-    void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
-    // void onMqttSubscribe(uint16_t packetId, uint8_t qos);
-    // void onMqttPublish(uint16_t packetId);
-    bool connect();
+
+    static bool isConnected;
+    bool connected();
+    void disconnect();
+
+    void init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass, const char *cert_ca);
+
     void send(char *topic, Message *msg);
     void subscribe(char *topic);
     void subscribeALL();
-    void panelSend(char *topic, Message *msg);
-    void panelSubscribe(char *topic);
-    AsyncMqttClient *getMqttClient();
-    void OTAReturnCallback(int user, bool status);
+
+    esp_mqtt_client_handle_t getClient();
 };
 
 #endif //MQTT_H

@@ -1,70 +1,95 @@
 #include "MQTT.h"
 #include "constants.h"
 #include "WString.h"
+#include "Control.h"
+#include "Configuration.h"
 
-void onMqttSubscribe(uint16_t packetId, uint8_t qos)
-{
-    Serial.println("Subscribe acknowledged.");
-    Serial.print("  packetId: ");
-    Serial.println(packetId);
-    Serial.print("  qos: ");
-    Serial.println(qos);
-}
-
-void onMqttPublish(uint16_t packetId)
-{
-    Serial.println("Publish acknowledged.");
-    Serial.print("  packetId: ");
-    Serial.println(packetId);
-}
+bool MQTT::isConnected = false;
 
 MQTT::MQTT()
 {
-    this->mqttClient.setKeepAlive(MQTT_KEEPALIVE);
-    this->mqttClient.setServer(MQTT_HOST, MQTT_PORT);
-    this->mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
-    this->mqttClient.onSubscribe(onMqttSubscribe);
-    this->mqttClient.onPublish(onMqttPublish);
-    // this->mqttClient.setSecure(MQTT_SECURE);
-    // this->mqttClient.addServerFingerprint(mqttCertFingerprint);
 }
 
 MQTT::~MQTT()
 {
-    this->mqttClient.disconnect();
+    this->disconnect();
+    esp_mqtt_client_destroy(this->mqttClient);
 }
 
-void MQTT::onMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
+bool MQTT::connected()
 {
-    Serial.println("Publish received.");
-    Serial.print("  topic: ");
-    Serial.println(topic);
-    Serial.print("  qos: ");
-    Serial.println(properties.qos);
-    Serial.print("  dup: ");
-    Serial.println(properties.dup);
-    Serial.print("  retain: ");
-    Serial.println(properties.retain);
-    Serial.print("  len: ");
-    Serial.println(len);
-    Serial.print("  index: ");
-    Serial.println(index);
-    Serial.print("  total: ");
-    Serial.println(total);
+    return isConnected;
+}
 
-    if (this->mqttClient.connected())
+void MQTT::disconnect()
+{
+
+    esp_mqtt_client_disconnect(this->mqttClient);
+}
+
+void MQTT::send(char *topic, Message *msg)
+{
+    if (!this->isConnected)
+        return;
+    int msg_id;
+    String _topic = "device/" + (String)Configuration::getSerial() + "/" + (String)topic;
+    msg_id = esp_mqtt_client_publish(mqttClient, _topic.c_str(), (const char *)msg->getMessage(), msg->getLength(), 0, 0);
+    ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+}
+
+void MQTT::subscribe(char *topic)
+{
+    int msg_id;
+    String _topic = "device/" + (String)Configuration::getSerial() + "/" + (String)topic;
+    msg_id = esp_mqtt_client_subscribe(mqttClient, _topic.c_str(), 0);
+    ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+}
+
+void MQTT::subscribeALL()
+{
+    subscribe(TOPIC_TEST_REQUEST);
+    DPRINTLN("[MQTT] Subscribed all");
+}
+
+static void onMqttConnect(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+{
+    MQTT *self = static_cast<MQTT *>(handler_args);
+    ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+    self->subscribeALL();
+    self->isConnected = true;
+
+    Control::led1(true);
+    Message message(NULL, DataType::DataType_data0, "Connected");
+    self->send(TOPIC_TEST_REPORT, &message);
+}
+
+static void onMqttDisconnect(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+{
+    MQTT *self = static_cast<MQTT *>(handler_args);
+    ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+    self->disconnect();
+}
+
+static void onMessage(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+{
+    ESP_LOGI(TAG, "MQTT_EVENT_DATA");
+    MQTT *self = static_cast<MQTT *>(handler_args);
+    esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
+
+    if (self->isConnected)
     {
-        DPRINTLN("pubSubClient.connected()");
-        if (len > 0)
+        if (event->data_len > 0)
         {
             Message *message = NULL;
-            Message income(payload, len);
-            if (String(topic) == "device/" + String() + "/" + TOPIC_TEST_REQUEST)
+            Message income(event->data, event->data_len);
+
+            if (strncmp(event->topic, String("device/" + String(Configuration::getSerial()) + "/" + TOPIC_TEST_REQUEST).c_str(), event->topic_len) == 0)
             {
+                income.r_userData();
             }
-            else if (String(topic) == "device/" + String() + "/" + TOPIC_TEST_REQUEST)
-            {
-            }
+            // else if (String(topic) == "device/" + String() + "/" + TOPIC_TEST_REQUEST)
+            // {
+            // }
             if (message != NULL)
             {
                 delete message;
@@ -74,76 +99,57 @@ void MQTT::onMessage(char *topic, char *payload, AsyncMqttClientMessagePropertie
     }
 }
 
-void MQTT::send(char *topic, Message *msg)
+esp_mqtt_client_handle_t MQTT::getClient()
 {
-    String _topic = "device/" + (String)Configuration::getSerial() + "/" + (String)topic;
-    this->mqttClient.publish(_topic.c_str(), 0, false, (const char *)msg->getMessage(), msg->getLength());
+    return this->mqttClient;
 }
 
-void MQTT::panelSend(char *topic, Message *msg)
+void MQTT::init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass, const char *cert_ca)
 {
-    String _topic = "panel/" + (String)Configuration::getSerial() + "/" + (String)topic;
-    this->mqttClient.publish(_topic.c_str(), 0, false, (const char *)msg->getMessage(), msg->getLength());
-}
+    DPRINTLN("[MQTT] Trying to connect to server ");
+    DPRINTLN("[MQTT] " + (String)host);
+    DPRINTF("[MQTT] MQTT PORT: %d\n", port);
 
-void MQTT::panelSubscribe(char *topic)
-{
-    String _topic = "panel/" + (String)Configuration::getSerial() + "/" + (String)topic;
-    this->mqttClient.subscribe(_topic.c_str(), 0);
-}
+    String ClientId = DEVICE_TYPE;
+    ClientId += "-";
+    ClientId += String(Configuration::getSerial());
 
-void MQTT::subscribe(char *topic)
-{
-    String _topic = "device/" + (String)Configuration::getSerial() + "/" + (String)topic;
-    this->mqttClient.subscribe(_topic.c_str(), 0);
-}
+    const esp_mqtt_client_config_t mqtt_cfg = {
+        .event_handle = NULL,
+        .event_loop_handle = NULL,
+        .host = host,
+        .uri = NULL,
+        .port = port,
+        .client_id = ClientId.c_str(),
+        .username = mqtt_user,
+        .password = mqtt_pass,
+        .lwt_topic = NULL,
+        .lwt_msg = NULL,
+        .lwt_qos = NULL,
+        .lwt_retain = NULL,
+        .lwt_msg_len = NULL,
+        .disable_clean_session = NULL,
+        .keepalive = 60,
+        .disable_auto_reconnect = NULL,
+        .user_context = NULL,
+        .task_prio = 5,
+        .task_stack = 1024 * 10,
+        .buffer_size = 1024,
+        .cert_pem = cert_ca,
+        .cert_len = 0,
+        .client_cert_pem = NULL,
+        .client_cert_len = NULL,
+        .client_key_pem = NULL,
+        .client_key_len = NULL,
+        .transport = MQTT_TRANSPORT_OVER_SSL,
+    };
 
-AsyncMqttClient *MQTT::getMqttClient()
-{
-    return &this->mqttClient;
-}
+    ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
+    this->mqttClient = esp_mqtt_client_init(&mqtt_cfg);
 
-void MQTT::onMqttConnect(bool sessionPresent)
-{
-    Serial.println("Connected to MQTT.");
-    Serial.print("Session present: ");
-    Serial.println(sessionPresent);
-    subscribeALL();
-}
+    esp_mqtt_client_register_event(this->mqttClient, MQTT_EVENT_CONNECTED, onMqttConnect, (void *)this);
+    esp_mqtt_client_register_event(this->mqttClient, MQTT_EVENT_DISCONNECTED, onMqttDisconnect, (void *)this);
+    esp_mqtt_client_register_event(this->mqttClient, MQTT_EVENT_DATA, onMessage, (void *)this);
 
-void MQTT::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
-{
-    Serial.println("Disconnected from MQTT.");
-
-    if (reason == AsyncMqttClientDisconnectReason::TLS_BAD_FINGERPRINT)
-    {
-        Serial.println("Bad server fingerprint.");
-    }
-}
-
-void MQTT::subscribeALL()
-{
-    subscribe(TOPIC_TEST_REQUEST);
-}
-
-bool MQTT::connect()
-{
-    if (!this->mqttClient.connected())
-    {
-        String ClientId = DEVICE_TYPE;
-        ClientId += "-";
-        ClientId += String(Configuration::getSerial());
-        Serial.println(ClientId.c_str());
-
-        this->mqttClient.setClientId(ClientId.c_str());
-        this->mqttClient.connect();
-
-        unsigned long start = millis();
-        while (!this->mqttClient.connected() && (unsigned long)(millis()) - start <= MQTT_SOCKET_TIMEOUT)
-            vTaskDelay(250 / portTICK_RATE_MS);
-        if (this->mqttClient.connected())
-            return true;
-        else
-            return false;
-    }
+    esp_mqtt_client_start(this->mqttClient);
 }

@@ -1,5 +1,6 @@
 #include "Control.h"
 #include "MQTT.h"
+#include "certs.h"
 #include "constants.h"
 #include "Ticker.h"
 #include "WiFi.h"
@@ -13,9 +14,8 @@
 
 void TaskBlink(void *pvParameters);
 void TaskWifi(void *pvParameters);
-void TaskServer();
+//void TaskSoftAp(void *pvParameters); 
 
-WiFiClient espClient;
 MQTT *mqttClient;
 RF24 nrfClient(4, 5);
 
@@ -57,22 +57,6 @@ void IRAM_ATTR LED2_SW()
   }
 }
 
-void onMqttMsg(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
-{
-  mqttClient->onMessage(topic, payload, properties, len, index, total);
-}
-
-void onMqttConnect(bool sessionPresent)
-{
-  mqttClient->onMqttConnect(sessionPresent);
-}
-
-void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
-{
-  mqttClient->onMqttDisconnect(reason);
-  mqttReconnectTicker.once_ms(MQTT_RETRY_TIME_MS, TaskServer);
-}
-
 time_t setClock()
 {
   configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
@@ -94,15 +78,15 @@ time_t setClock()
   return NTPtime;
 }
 
-void TaskBlink(void *pvParameters) // This is a task.
+void TaskBlink(void *pvParameters)
 {
   (void)pvParameters;
 
   for (;;)
   {
-    if (WiFi.status() == WL_CONNECTED && mqttClient->getMqttClient()->connected())
+    if (WiFi.status() == WL_CONNECTED && mqttClient->connected())
     {
-      Serial.println("[LED] Task Suspended");
+      DPRINTLN("[LED] Task Suspended");
       vTaskSuspend(NULL);
     }
     else
@@ -115,8 +99,8 @@ void TaskBlink(void *pvParameters) // This is a task.
 
 void WifiDisconnected(WiFiEvent_t event)
 {
-  Serial.println("[WIFI] Disconnected from WiFi");
-  mqttClient->getMqttClient()->disconnect();
+  DPRINTLN("[WIFI] Disconnected from WiFi");
+  mqttClient->disconnect();
   WiFi.removeEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
   vTaskResume(wifiHandler);
   vTaskResume(blinkHandler);
@@ -124,43 +108,58 @@ void WifiDisconnected(WiFiEvent_t event)
 
 void WifiGotIp(WiFiEvent_t event)
 {
-  Serial.print("[WIFI] Obtained IP address: ");
-  Serial.println(WiFi.localIP());
+  DPRINT("[WIFI] Obtained IP address: ");
+  DPRINTLN(WiFi.localIP());
+  setClock();
+  esp_mqtt_client_reconnect(mqttClient->getClient());
   WiFi.onEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
-  TaskServer();
 }
 
 void TaskWifi(void *pvParameters)
 {
   WiFi.onEvent(WifiGotIp, SYSTEM_EVENT_STA_GOT_IP);
-  // Serial.printf("[WIFI] mode set to WIFI_STA %s\n", WiFi.mode(WIFI_MODE_STA) ? "OK" : "Failed!");
+  // DPRINTF("[WIFI] mode set to WIFI_STA %s\n", WiFi.mode(WIFI_MODE_STA) ? "OK" : "Failed!");
   for (;;)
   {
     if (WiFi.status() == WL_CONNECTED)
     {
-      Serial.println("[WIFI] Task Suspended");
+      DPRINTLN("[WIFI] Task Suspended");
       vTaskSuspend(NULL);
       // vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
 
     WiFi.begin(Configuration::getLocalSsid(), Configuration::getLocalPassword());
     DPRINTLN("[WIFI] Connecting to " + String(Configuration::getLocalSsid()));
-    Serial.printf("[WIFI] MODE: %d\n", WiFi.getMode());
+    DPRINTF("[WIFI] MODE: %d\n", WiFi.getMode());
+    vTaskSuspend(blinkHandler);
 
     unsigned long startAttemptTime = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < WIFI_TIMEOUT_MS)
     {
-      vTaskSuspend(blinkHandler);
       Control::led1(!Control::led1());
       vTaskDelay(250 / portTICK_RATE_MS);
     }
+    vTaskResume(blinkHandler);
 
     if (WiFi.status() != WL_CONNECTED)
     {
-      Serial.println("[WIFI] Connection failed, retry in 60s");
-      vTaskResume(blinkHandler);
+      DPRINTLN("[WIFI] Connection failed, retry in 60s");
+      mqttClient->disconnect();
       vTaskDelay(WIFI_RETRY_TIME_MS / portTICK_PERIOD_MS);
     }
+  }
+  // vTaskDelete(NULL);
+}
+
+void TaskSoftAp(void *pvParameters)
+{
+  // server.connect(Configuration::getApSsid(), Configuration::getApPassword());
+  for (;;)
+  {
+    xSemaphoreTake(sema_SoftAP, portMAX_DELAY); // whiles server.loop() is running no other mqtt operations should be in process
+    //server.loop();
+    xSemaphoreGive(sema_SoftAP);
+    vTaskDelay(2 / portTICK_RATE_MS);
   }
   // vTaskDelete(NULL);
 }
@@ -174,34 +173,6 @@ void TaskNRF(void *pvParameters)
     }
     else
     {
-    }
-  }
-}
-
-void TaskServer() //void *pvParameters
-{
-  mqttReconnectTicker.detach();
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    setClock();
-    Serial.println("[MQTT] Trying to connect to server ");
-    Serial.println("[MQTT] " + (String)MQTT_HOST);
-    Serial.printf("[MQTT] MQTT PORT: %d\n", MQTT_PORT);
-
-    if (mqttClient->getMqttClient()->connected())
-    {
-      mqttClient->getMqttClient()->disconnect();
-    }
-    if (mqttClient->connect())
-    {
-      Control::led1(true);
-      Serial.println("[MQTT] CONNECTED");
-    }
-    else
-    {
-      Serial.println("[MQTT] Failed to connect to server");
-      mqttClient->getMqttClient()->disconnect();
-      vTaskResume(blinkHandler);
     }
   }
 }
@@ -264,19 +235,20 @@ void setup()
   }
   Configuration::setWifisScan(wifisAmount, wifisIntensity, wifisSsid);
 
-  mqttClient = new MQTT();
+  //DPRINTF("[LOCAL] mode set to WIFI_AP %s\n", WiFi.mode(WIFI_MODE_AP) ? "OK" : "Failed!");
+  //server.connect(Configuration::getApSsid(), Configuration::getApPassword());
+  //DPRINTF("[LOCAL] MODE: %d\n", WiFi.getMode());
 
-  mqttClient->getMqttClient()->onMessage(onMqttMsg);
-  mqttClient->getMqttClient()->onConnect(onMqttConnect);
-  mqttClient->getMqttClient()->onDisconnect(onMqttDisconnect);
+  mqttClient = new MQTT();
 
   sema_SoftAP = xSemaphoreCreateBinary();
   xSemaphoreGive(sema_SoftAP);
 
   xTaskCreatePinnedToCore(TaskBlink, "TaskBlink", 1024, NULL, 1, &blinkHandler, 1);
-  xTaskCreatePinnedToCore(TaskWifi, "TaskWifi", 1024 * 16, NULL, 3, &wifiHandler, 0);
-  // xTaskCreatePinnedToCore(MQTTkeepalive, "MQTTkeepalive", 1024 * 16, NULL, 3, &mqttHandler, 1);
-  // xTaskCreatePinnedToCore(TaskNRF, "TaskNRF", 1024, NULL, 2, &nrfHandler, 1);
+  xTaskCreatePinnedToCore(TaskWifi, "TaskWifi", 1024 * 16, NULL, 5, &wifiHandler, 0);
+  //xTaskCreatePinnedToCore(TaskSoftAp, "TaskSoftAp", 1024 * 4, NULL, 4, NULL, 1);
+
+  mqttClient->init(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASS, ca_cert);
 
   Serial.println("[SETUP] END\n");
 }
@@ -300,5 +272,27 @@ void loop()
       ESP.restart();
     }
     reset = false;
+  }
+
+  if (Serial.available() > 0)
+  {
+    String income = Serial.readString();
+    if (income == "getSerial")
+    {
+      DPRINTLN(Configuration::getSerial());
+    }
+    else if (income == "reset")
+    {
+      Control::led1(false);
+      DPRINTLN("[RESET]");
+      Configuration::reset();
+      delay(500);
+      ESP.restart();
+    }
+    else
+    {
+      DPRINTLN(income);
+      DPRINTLN("is NOT CODED");
+    }
   }
 }
