@@ -6,7 +6,6 @@
 #include <WiFiClient.h>
 #include "Message.h"
 #include "Configuration.h"
-#include "certs.h"
 
 #include "mqtt_client.h"
 
@@ -24,7 +23,7 @@ public:
     bool connected();
     void disconnect();
 
-    void init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass, const char *cert_ca);
+    void init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass);
 
     void send(char *topic, Message *msg);
     void subscribe(char *topic);

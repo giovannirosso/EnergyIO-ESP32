@@ -1,6 +1,5 @@
 #include "Control.h"
 #include "MQTT.h"
-#include "certs.h"
 #include "constants.h"
 #include "Ticker.h"
 #include "WiFi.h"
@@ -248,7 +247,7 @@ void setup()
   xTaskCreatePinnedToCore(TaskWifi, "TaskWifi", 1024 * 16, NULL, 5, &wifiHandler, 0);
   //xTaskCreatePinnedToCore(TaskSoftAp, "TaskSoftAp", 1024 * 4, NULL, 4, NULL, 1);
 
-  mqttClient->init(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASS, ca_cert);
+  mqttClient->init(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASS);
 
   Serial.println("[SETUP] END\n");
 }

@@ -8,7 +8,7 @@
 #include "pb_common.h"
 #include "pb_decode.h" // nanopb decode library
 #include "pb_encode.h" // nanopb encode library
-#include "message.pb.h"
+#include "messages.pb.h"
 #include <WString.h>
 
 #define PREFERENCES_NAMESPACE (const char *)"master-config"

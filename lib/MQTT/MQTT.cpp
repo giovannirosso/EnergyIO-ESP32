@@ -59,7 +59,7 @@ static void onMqttConnect(void *handler_args, esp_event_base_t base, int32_t eve
     self->isConnected = true;
 
     Control::led1(true);
-    Message message(NULL, DataType::DataType_data0, "Connected");
+    Message message(2499, 123456789, DataType::DataType_ANY_DATA);
     self->send(TOPIC_TEST_REPORT, &message);
 }
 
@@ -104,7 +104,7 @@ esp_mqtt_client_handle_t MQTT::getClient()
     return this->mqttClient;
 }
 
-void MQTT::init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass, const char *cert_ca)
+void MQTT::init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass)
 {
     DPRINTLN("[MQTT] Trying to connect to server ");
     DPRINTLN("[MQTT] " + (String)host);
@@ -135,13 +135,13 @@ void MQTT::init(const char *host, uint16_t port, const char *mqtt_user, const ch
         .task_prio = 5,
         .task_stack = 1024 * 10,
         .buffer_size = 1024,
-        .cert_pem = cert_ca,
+        .cert_pem = NULL,
         .cert_len = 0,
         .client_cert_pem = NULL,
         .client_cert_len = NULL,
         .client_key_pem = NULL,
         .client_key_len = NULL,
-        .transport = MQTT_TRANSPORT_OVER_SSL,
+        .transport = MQTT_TRANSPORT_OVER_TCP,
     };
 
     ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());

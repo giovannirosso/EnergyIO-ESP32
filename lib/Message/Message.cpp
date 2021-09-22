@@ -43,19 +43,19 @@ int Message::getUser()
 }
 
 //-------------------Serial
-Message::Message(int _user, DataType _type, char *_data)
+Message::Message(uint64_t _datetime, double _data, DataType _type)
 {
   this->user = NULL;
 
   uint8_t buffer[128];
-  userData msg = userData_init_zero;
+  DataReport msg = DataReport_init_zero;
 
   pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
 
-  strcpy(msg.data, _data);
-  msg.user = _user;
+  msg.datetime, _datetime;
+  msg.data = _data;
   msg.type = _type;
-  pb_encode(&stream, userData_fields, &msg);
+  pb_encode(&stream, DataReport_fields, &msg);
 
   printf("\nSERIAL confirmation : ");
   for (int i = 0; i < stream.bytes_written; i++)
@@ -70,13 +70,13 @@ Message::Message(int _user, DataType _type, char *_data)
 
 void Message::r_userData()
 {
-  userData msg userData_init_zero;
+  DataReport msg DataReport_init_zero;
   pb_istream_t stream = pb_istream_from_buffer(this->dado, this->length);
-  pb_decode(&stream, userData_fields, &msg);
+  pb_decode(&stream, DataReport_fields, &msg);
 
-  printf("User :%d", msg.user);
+  printf("datetime :%d", msg.datetime);
   printf("DataType: %d", msg.type);
   printf("Data: %s", msg.data);
 
-  this->user = msg.user;
+  // this->user = msg.user;
 }
