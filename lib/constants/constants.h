@@ -7,8 +7,6 @@
 #define RECEIVER true
 // #define TRANSMITTER
 
-#define CHANNEL 1 //127
-
 #define FIRMWARE_VERSION "v1.0"
 
 #define WIFI_RETRY_TIME_MS 30000

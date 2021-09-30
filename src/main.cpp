@@ -13,10 +13,10 @@
 
 void TaskBlink(void *pvParameters);
 void TaskWifi(void *pvParameters);
-//void TaskSoftAp(void *pvParameters); 
+//void TaskSoftAp(void *pvParameters);
 
 MQTT *mqttClient;
-RF24 nrfClient(4, 5);
+RADIO *nrfClient;
 
 Ticker mqttReconnectTicker;
 
@@ -165,14 +165,11 @@ void TaskSoftAp(void *pvParameters)
 
 void TaskNRF(void *pvParameters)
 {
+  nrfClient->init();
   for (;;)
   {
-    if (true)
-    {
-    }
-    else
-    {
-    }
+    nrfClient->listen();
+    vTaskDelay(500 / portTICK_RATE_MS);
   }
 }
 
@@ -239,6 +236,7 @@ void setup()
   //DPRINTF("[LOCAL] MODE: %d\n", WiFi.getMode());
 
   mqttClient = new MQTT();
+  nrfClient = new RADIO();
 
   sema_SoftAP = xSemaphoreCreateBinary();
   xSemaphoreGive(sema_SoftAP);
@@ -246,6 +244,7 @@ void setup()
   xTaskCreatePinnedToCore(TaskBlink, "TaskBlink", 1024, NULL, 1, &blinkHandler, 1);
   xTaskCreatePinnedToCore(TaskWifi, "TaskWifi", 1024 * 16, NULL, 5, &wifiHandler, 0);
   //xTaskCreatePinnedToCore(TaskSoftAp, "TaskSoftAp", 1024 * 4, NULL, 4, NULL, 1);
+  xTaskCreatePinnedToCore(TaskNRF, "TaskNRF", 1024 * 4, NULL, 4, &nrfHandler, 1);
 
   mqttClient->init(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASS);
 

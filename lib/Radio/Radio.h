@@ -3,20 +3,25 @@
 
 #include "constants.h"
 #include "RF24.h"
+#include <SPI.h>
+// #include "printf.h"
 
 #define RECEIVER true
 // #define TRANSMITTER
 
-#define CHANNEL 1 //127
+#define CHANNEL 69 //127
 
 class RADIO
 {
 private:
-    bool connected;
+    RF24 nrf24;
 
 public:
-    RADIO(RF24 &nrfClient);
+    RADIO();
     ~RADIO();
+    void init();
+    void changeRole(bool role);
+    void listen();
 };
 
 #endif //RADIO_H
