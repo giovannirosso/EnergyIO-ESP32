@@ -30,13 +30,15 @@ void RADIO::init()
     nrf24.setPALevel(RF24_PA_MAX);
     nrf24.setDataRate(RF24_250KBPS);
     // nrf24.setDataRate(RF24_1MBPS);
-    nrf24.setPayloadSize(sizeof(payload));
-    nrf24.setCRCLength(RF24_CRC_8);
+    nrf24.setCRCLength(RF24_CRC_16);
+    nrf24.enableDynamicPayloads();
+    nrf24.enableAckPayload();
+    nrf24.setPayloadSize(32);
     // nrf24.setChannel(CHANNEL);
 
-    nrf24.openWritingPipe(node_serial[1]);
-    nrf24.openReadingPipe(1, node_serial[0]);
-    nrf24.openReadingPipe(2, node_serial[1]);
+    nrf24.openWritingPipe(node_serial[0]);
+    nrf24.openReadingPipe(1, node_serial[1]);
+    // nrf24.openReadingPipe(2, node_serial[0]);
 
     changeRole(nrfRole);
     nrf24.printPrettyDetails();
