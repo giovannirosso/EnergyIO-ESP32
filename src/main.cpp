@@ -24,9 +24,10 @@ SemaphoreHandle_t sema_SoftAP;
 
 TaskHandle_t blinkHandler, wifiHandler, nrfHandler;
 
-bool reset = false;
 unsigned long debouncing_time = 200; //Debouncing Time in Milliseconds
 unsigned long last_micros;
+
+bool reset = false;
 void IRAM_ATTR resetConfigs()
 {
   if (((unsigned long)(millis() - last_micros)) >= debouncing_time)
@@ -36,12 +37,14 @@ void IRAM_ATTR resetConfigs()
   }
 }
 
+bool changeRole = false;
 void IRAM_ATTR LED1_SW()
 {
   if (((unsigned long)(millis() - last_micros)) >= debouncing_time)
   {
     Control::led1(!Control::led1());
     Serial.println("LED1");
+    changeRole = true;
     last_micros = millis();
   }
 }
@@ -100,7 +103,7 @@ void WifiDisconnected(WiFiEvent_t event)
 {
   DPRINTLN("[WIFI] Disconnected from WiFi");
   mqttClient->disconnect();
-  WiFi.removeEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
+  WiFi.removeEvent(WifiDisconnected, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   vTaskResume(wifiHandler);
   vTaskResume(blinkHandler);
 }
@@ -111,18 +114,18 @@ void WifiGotIp(WiFiEvent_t event)
   DPRINTLN(WiFi.localIP());
   setClock();
   esp_mqtt_client_reconnect(mqttClient->getClient());
-  WiFi.onEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
+  WiFi.onEvent(WifiDisconnected, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
 }
 
 void TaskWifi(void *pvParameters)
 {
-  WiFi.onEvent(WifiGotIp, SYSTEM_EVENT_STA_GOT_IP);
+  WiFi.onEvent(WifiGotIp, ARDUINO_EVENT_WIFI_STA_GOT_IP);
   // DPRINTF("[WIFI] mode set to WIFI_STA %s\n", WiFi.mode(WIFI_MODE_STA) ? "OK" : "Failed!");
   for (;;)
   {
     if (WiFi.status() == WL_CONNECTED)
     {
-      DPRINTLN("[WIFI] Task Suspended");
+      DPRINTLN("\n[WIFI] Task Suspended");
       vTaskSuspend(NULL);
       // vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
@@ -168,7 +171,10 @@ void TaskNRF(void *pvParameters)
   nrfClient->init();
   for (;;)
   {
-    nrfClient->listen();
+    if (nrfClient->getRole())
+      nrfClient->report();
+    else
+      nrfClient->listen();
     vTaskDelay(500 / portTICK_RATE_MS);
   }
 }
@@ -270,6 +276,12 @@ void loop()
       ESP.restart();
     }
     reset = false;
+  }
+
+  if (changeRole)
+  {
+    nrfClient->changeRole(!nrfClient->getRole());
+    changeRole = false;
   }
 
   if (Serial.available() > 0)

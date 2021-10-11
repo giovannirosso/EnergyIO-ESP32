@@ -7,6 +7,7 @@
 #include "pb_decode.h" // nanopb decode library
 #include "pb_encode.h" // nanopb encode library
 #include "messages.pb.h"
+#include "constants.h"
 
 #include "WString.h"
 
@@ -29,6 +30,7 @@ public:
 	Message(uint8_t *data, uint16_t length); // construtor genérico
 	Message(char *data, uint16_t length);	 // construtor genéric
 	~Message();
+	void print();
 
 	Message(uint64_t _datetime, double _data, DataType _type);
 

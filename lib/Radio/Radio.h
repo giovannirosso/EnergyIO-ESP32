@@ -15,6 +15,7 @@ class RADIO
 {
 private:
     RF24 nrf24;
+    bool nrfRole;
 
 public:
     RADIO();
@@ -22,6 +23,8 @@ public:
     void init();
     void changeRole(bool role);
     void listen();
+    void report();
+    bool getRole();
 };
 
 #endif //RADIO_H

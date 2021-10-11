@@ -17,6 +17,16 @@ Message::Message(char *_data, uint16_t _length)
   this->user = NULL;
 }
 
+void Message::print()
+{
+  DPRINTF("\n[MSG] DATA   : ");
+  for (int i = 0; i < length; i++)
+  {
+    DPRINTF("%02X", data[i]);
+  }
+  DPRINTLN();
+}
+
 Message::~Message()
 {
   // delete[] this->
@@ -70,7 +80,7 @@ Message::Message(uint64_t _datetime, double _data, DataType _type)
 
 void Message::r_userData()
 {
-  DataReport msg DataReport_init_zero;
+  DataReport msg = DataReport_init_zero;
   pb_istream_t stream = pb_istream_from_buffer(this->dado, this->length);
   pb_decode(&stream, DataReport_fields, &msg);
 
