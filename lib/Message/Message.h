@@ -39,7 +39,7 @@ public:
 	uint16_t getLength();
 	int getUser();
 
-	void r_userData(); //construtor confirmation
+	void r_EnergyData(); //construtor r_EnergyData
 };
 
 #endif //MESSAGE_H

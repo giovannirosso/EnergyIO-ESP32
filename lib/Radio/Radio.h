@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include "RF24.h"
+#include "Message.h"
 #include <SPI.h>
 // #include "printf.h"
 

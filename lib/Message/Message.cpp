@@ -78,15 +78,15 @@ Message::Message(uint64_t _datetime, double _data, DataType _type)
   this->length = stream.bytes_written;
 }
 
-void Message::r_userData()
+void Message::r_EnergyData()
 {
-  DataReport msg = DataReport_init_zero;
+  EnergySensorReport msg = EnergySensorReport_init_zero;
   pb_istream_t stream = pb_istream_from_buffer(this->dado, this->length);
-  pb_decode(&stream, DataReport_fields, &msg);
+  pb_decode(&stream, EnergySensorReport_fields, &msg);
 
-  printf("datetime :%d", msg.datetime);
-  printf("DataType: %d", msg.type);
-  printf("Data: %s", msg.data);
+  printf("DECODED: Tensao: %.1f  Corrente:%.3f  "
+         "Pot.Ativa:%d  Pot Aparente:%d\r\n",
+         msg.v_rms, msg.i_rms, msg.pot_ativa, msg.pot_aparente);
 
   // this->user = msg.user;
 }

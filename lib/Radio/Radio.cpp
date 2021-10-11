@@ -2,8 +2,6 @@
 #include "WString.h"
 #include "Radio.h"
 
-float payload = 0.0;
-
 uint8_t data[32];
 uint16_t length;
 
@@ -61,6 +59,7 @@ void RADIO::changeRole(bool role)
 void RADIO::listen()
 {
     uint8_t pipe;
+    Message *message = NULL;
     if (nrf24.available(&pipe))
     {                                           // is there a payload? get the pipe number that recieved it
         uint8_t bytes = nrf24.getPayloadSize(); // get the size of the payload
@@ -71,11 +70,16 @@ void RADIO::listen()
         Serial.print(pipe); // print the pipe number
         Serial.print(F(": "));
         // Serial.println(payload); // print the payload's value
-        for (int i = 0; i < bytes; i++)
+        uint8_t msg_length = data[31];
+        uint8_t msg_buffer[msg_length];
+        for (int i = 0; i < msg_length; i++)
         {
             Serial.printf("%02X", data[i]);
+            msg_buffer[i] = data[i];
         }
         Serial.printf("\n");
+        Message income(msg_buffer, msg_length);
+        income.r_EnergyData();
     }
 }
 
