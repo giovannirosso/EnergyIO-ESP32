@@ -79,7 +79,11 @@ void RADIO::listen()
         }
         Serial.printf("\n");
         Message income(msg_buffer, msg_length);
+
+        //? if(pipe == ENERGY SENSOR TYPE)
         income.r_EnergyData();
+        //? elseif(pipe == WATER SENSOR TYPE)
+        // income.r_WaterData();
     }
 }
 

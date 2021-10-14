@@ -54,7 +54,7 @@ void MQTT::subscribeALL()
 static void onMqttConnect(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
     MQTT *self = static_cast<MQTT *>(handler_args);
-    ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+    DPRINTLN("[MQTT] MQTT_EVENT_CONNECTED");
     self->subscribeALL();
     self->isConnected = true;
 
@@ -66,13 +66,13 @@ static void onMqttConnect(void *handler_args, esp_event_base_t base, int32_t eve
 static void onMqttDisconnect(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
     MQTT *self = static_cast<MQTT *>(handler_args);
-    ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+    DPRINTLN("[MQTT] MQTT_EVENT_DISCONNECTED");
     self->disconnect();
 }
 
 static void onMessage(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    ESP_LOGI(TAG, "MQTT_EVENT_DATA");
+    DPRINTLN("[MQTT] MQTT_EVENT_DATA");
     MQTT *self = static_cast<MQTT *>(handler_args);
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
 
@@ -85,7 +85,7 @@ static void onMessage(void *handler_args, esp_event_base_t base, int32_t event_i
 
             if (strncmp(event->topic, String("device/" + String(Configuration::getSerial()) + "/" + TOPIC_TEST_REQUEST).c_str(), event->topic_len) == 0)
             {
-                income.r_userData();
+                // income.r_userData();
             }
             // else if (String(topic) == "device/" + String() + "/" + TOPIC_TEST_REQUEST)
             // {

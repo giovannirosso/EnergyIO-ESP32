@@ -39,7 +39,8 @@ public:
 	uint16_t getLength();
 	int getUser();
 
-	void r_EnergyData(); //construtor r_EnergyData
+	void r_EnergyData();
+	void r_WaterData();
 };
 
 #endif //MESSAGE_H
