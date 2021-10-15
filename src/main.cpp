@@ -13,7 +13,7 @@
 
 void TaskBlink(void *pvParameters);
 void TaskWifi(void *pvParameters);
-//void TaskSoftAp(void *pvParameters);
+// void TaskSoftAp(void *pvParameters);
 
 MQTT *mqttClient;
 RADIO *nrfClient;
@@ -24,7 +24,7 @@ SemaphoreHandle_t sema_SoftAP;
 
 TaskHandle_t blinkHandler, wifiHandler, nrfHandler;
 
-unsigned long debouncing_time = 200; //Debouncing Time in Milliseconds
+unsigned long debouncing_time = 200; // Debouncing Time in Milliseconds
 unsigned long last_micros;
 
 bool reset = false;
@@ -38,23 +38,23 @@ void IRAM_ATTR resetConfigs()
 }
 
 bool changeRole = false;
-void IRAM_ATTR LED1_SW()
+void IRAM_ATTR changeRoleSW()
 {
   if (((unsigned long)(millis() - last_micros)) >= debouncing_time)
   {
-    Control::led1(!Control::led1());
-    Serial.println("LED1");
+    Serial.println("changeRoleSW");
     changeRole = true;
     last_micros = millis();
   }
 }
 
-void IRAM_ATTR LED2_SW()
+bool initPairing = false;
+void IRAM_ATTR pairingButton()
 {
   if (((unsigned long)(millis() - last_micros)) >= debouncing_time)
   {
-    Control::led2(!Control::led2());
-    Serial.println("LED2");
+    Serial.println("pairingButton");
+    initPairing = true;
     last_micros = millis();
   }
 }
@@ -103,7 +103,7 @@ void WifiDisconnected(WiFiEvent_t event)
 {
   DPRINTLN("[WIFI] Disconnected from WiFi");
   mqttClient->disconnect();
-  WiFi.removeEvent(WifiDisconnected, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  WiFi.removeEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
   vTaskResume(wifiHandler);
   vTaskResume(blinkHandler);
 }
@@ -114,12 +114,12 @@ void WifiGotIp(WiFiEvent_t event)
   DPRINTLN(WiFi.localIP());
   setClock();
   esp_mqtt_client_reconnect(mqttClient->getClient());
-  WiFi.onEvent(WifiDisconnected, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  WiFi.onEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
 }
 
 void TaskWifi(void *pvParameters)
 {
-  WiFi.onEvent(WifiGotIp, ARDUINO_EVENT_WIFI_STA_GOT_IP);
+  WiFi.onEvent(WifiGotIp, SYSTEM_EVENT_STA_GOT_IP);
   // DPRINTF("[WIFI] mode set to WIFI_STA %s\n", WiFi.mode(WIFI_MODE_STA) ? "OK" : "Failed!");
   for (;;)
   {
@@ -159,7 +159,7 @@ void TaskSoftAp(void *pvParameters)
   for (;;)
   {
     xSemaphoreTake(sema_SoftAP, portMAX_DELAY); // whiles server.loop() is running no other mqtt operations should be in process
-    //server.loop();
+    // server.loop();
     xSemaphoreGive(sema_SoftAP);
     vTaskDelay(2 / portTICK_RATE_MS);
   }
@@ -171,9 +171,7 @@ void TaskNRF(void *pvParameters)
   nrfClient->init();
   for (;;)
   {
-    if (nrfClient->getRole())
-      nrfClient->report();
-    else
+    if (nrfClient->getRole() && initPairing == false)
       nrfClient->listen();
     vTaskDelay(500 / portTICK_RATE_MS);
   }
@@ -221,8 +219,8 @@ void setup()
   Control::led2(false);
   Control::led3(false);
 
-  attachInterrupt(digitalPinToInterrupt(SW1), LED1_SW, FALLING);
-  attachInterrupt(digitalPinToInterrupt(SW2), LED2_SW, FALLING);
+  attachInterrupt(digitalPinToInterrupt(SW1), changeRoleSW, FALLING);
+  attachInterrupt(digitalPinToInterrupt(SW2), pairingButton, FALLING);
   attachInterrupt(digitalPinToInterrupt(SW3), resetConfigs, FALLING);
 
   int wifisAmount = WiFi.scanNetworks();
@@ -237,9 +235,9 @@ void setup()
   }
   Configuration::setWifisScan(wifisAmount, wifisIntensity, wifisSsid);
 
-  //DPRINTF("[LOCAL] mode set to WIFI_AP %s\n", WiFi.mode(WIFI_MODE_AP) ? "OK" : "Failed!");
-  //server.connect(Configuration::getApSsid(), Configuration::getApPassword());
-  //DPRINTF("[LOCAL] MODE: %d\n", WiFi.getMode());
+  // DPRINTF("[LOCAL] mode set to WIFI_AP %s\n", WiFi.mode(WIFI_MODE_AP) ? "OK" : "Failed!");
+  // server.connect(Configuration::getApSsid(), Configuration::getApPassword());
+  // DPRINTF("[LOCAL] MODE: %d\n", WiFi.getMode());
 
   mqttClient = new MQTT();
   nrfClient = new RADIO();
@@ -249,7 +247,7 @@ void setup()
 
   xTaskCreatePinnedToCore(TaskBlink, "TaskBlink", 1024, NULL, 1, &blinkHandler, 1);
   xTaskCreatePinnedToCore(TaskWifi, "TaskWifi", 1024 * 16, NULL, 5, &wifiHandler, 0);
-  //xTaskCreatePinnedToCore(TaskSoftAp, "TaskSoftAp", 1024 * 4, NULL, 4, NULL, 1);
+  // xTaskCreatePinnedToCore(TaskSoftAp, "TaskSoftAp", 1024 * 4, NULL, 4, NULL, 1);
   xTaskCreatePinnedToCore(TaskNRF, "TaskNRF", 1024 * 4, NULL, 4, &nrfHandler, 1);
 
   mqttClient->init(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASS);
@@ -282,6 +280,43 @@ void loop()
   {
     nrfClient->changeRole(!nrfClient->getRole());
     changeRole = false;
+  }
+
+  if (initPairing)
+  {
+    unsigned long start = millis();
+    bool aux = false;
+    nrfClient->changeRole(false);
+    while (aux != true && (unsigned long)(millis()) - start <= 15000)
+    {
+      if (nrfClient->pairingMode())
+      {
+        aux = true;
+      }
+      Control::led3(!Control::led3());
+      delay(250);
+    }
+    if ((unsigned long)(millis()) - start > 15000)
+    {
+      Serial.println("[PAIRING] Timeout");
+      nrfClient->changeRole(true);
+    }
+    start = millis();
+    while (aux == true && (unsigned long)(millis()) - start <= 15000)
+    {
+      if (nrfClient->listenPairing())
+      {
+        aux = false;
+        DPRINTLN("[PAIRING] received\n\n");
+      }
+      Control::led3(!Control::led3());
+      delay(50);
+    }
+    if ((unsigned long)(millis()) - start > 15000)
+    {
+      Serial.println("[PAIRING] Timeout");
+    }
+    initPairing = false;
   }
 
   if (Serial.available() > 0)

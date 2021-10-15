@@ -32,7 +32,7 @@ public:
 	~Message();
 	void print();
 
-	Message(uint64_t _datetime, double _data, DataType _type);
+	Message(char _serial[10], int32_t _channel);
 
 	void deleteData();
 	byte *getMessage();
@@ -41,6 +41,7 @@ public:
 
 	void r_EnergyData();
 	void r_WaterData();
+	void r_pairingMessage();
 };
 
-#endif //MESSAGE_H
+#endif // MESSAGE_H

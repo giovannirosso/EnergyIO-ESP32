@@ -11,12 +11,12 @@
 #include "messages.pb.h"
 #include <WString.h>
 
-#define PREFERENCES_NAMESPACE (const char *)"master-config"
+#define PREFERENCES_NAMESPACE (const char *)"HUB-config"
 
 #define DEVICE_SERIAL "XX1234ABC"
 #define DEVICE_TYPE "MA"
 #define MAC_SIZE 6
-#define DEFAULT_AP_SSID "EnergyIO Master"
+#define DEFAULT_AP_SSID "EnergyIO HUB"
 #define DEFAULT_AP_PASSWORD "12345678"
 #define DEFAULT_USER 0
 

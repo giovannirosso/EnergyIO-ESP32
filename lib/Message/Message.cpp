@@ -52,30 +52,28 @@ int Message::getUser()
   return this->user;
 }
 
-//-------------------Serial
-Message::Message(uint64_t _datetime, double _data, DataType _type)
+Message::Message(char _serial[10], int32_t _channel)
 {
-  // this->user = NULL;
+  this->user = NULL;
 
-  // uint8_t buffer[128];
-  // DataReport msg = DataReport_init_zero;
+  uint8_t buffer[128];
+  PairingMessage msg = PairingMessage_init_zero;
 
-  // pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
 
-  // msg.datetime, _datetime;
-  // msg.data = _data;
-  // msg.type = _type;
-  // pb_encode(&stream, DataReport_fields, &msg);
+  strcpy(msg.serial, _serial);
+  msg.channel = _channel;
+  pb_encode(&stream, PairingMessage_fields, &msg);
 
-  // printf("\nSERIAL confirmation : ");
-  // for (int i = 0; i < stream.bytes_written; i++)
-  // {
-  //   data[i] = buffer[i];
-  //   printf("%02X", buffer[i]);
-  // }
-  // printf("\n");
+  printf("\nPairing Msg : ");
+  for (int i = 0; i < stream.bytes_written; i++)
+  {
+    data[i] = buffer[i];
+    printf("%02X", buffer[i]);
+  }
+  printf("\n");
 
-  // this->length = stream.bytes_written;
+  this->length = stream.bytes_written;
 }
 
 void Message::r_EnergyData()
@@ -98,6 +96,13 @@ void Message::r_WaterData()
   pb_decode(&stream, WaterSensorReport_fields, &msg);
 
   printf("DECODED: Amostras: %d	Instantaneo:%.1f mL/seg\r\n", msg.samples, msg.instant);
+}
 
-  // this->user = msg.user;
+void Message::r_pairingMessage()
+{
+  PairingMessage msg = PairingMessage_init_zero;
+  pb_istream_t stream = pb_istream_from_buffer(this->dado, this->length);
+  pb_decode(&stream, PairingMessage_fields, &msg);
+
+  printf("DECODED: Serial: %s	Channel: %d\r\n", msg.serial, msg.channel);
 }

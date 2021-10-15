@@ -59,8 +59,8 @@ static void onMqttConnect(void *handler_args, esp_event_base_t base, int32_t eve
     self->isConnected = true;
 
     Control::led1(true);
-    Message message(2499, 123456789, DataType::DataType_ANY_DATA);
-    self->send(TOPIC_TEST_REPORT, &message);
+    // Message message(2499, 123456789, DataType::DataType_ANY_DATA);
+    // self->send(TOPIC_TEST_REPORT, &message);
 }
 
 static void onMqttDisconnect(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)

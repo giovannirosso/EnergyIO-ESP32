@@ -24,7 +24,7 @@
 #define MQTT_USER "device"
 #define MQTT_PASS "HG7CrpAVuiLB7QD"
 
-#define CLIENT_ID "MasterModule"
+#define CLIENT_ID "HubModule"
 
 #define SSID_LOCAL "Rosso"
 #define PASSWORD_LOCAL "055A64F7"
@@ -37,12 +37,12 @@
 #define DEBUGMODE_LOCAL
 #define DEBUGMODE_CONTROL
 
-#ifdef DEBUGMODE                                  //Macros are usually in all capital letters.
-#define DPRINT(...) Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
-#define DPRINTF(...) Serial.printf(__VA_ARGS__)   //DPRINTF is a macro, debug print
-#define DPRINTLN(...) Serial.println(__VA_ARGS__) //DPRINTLN is a macro, debug print with new line
+#ifdef DEBUGMODE                                  // Macros are usually in all capital letters.
+#define DPRINT(...) Serial.print(__VA_ARGS__)     // DPRINT is a macro, debug print
+#define DPRINTF(...) Serial.printf(__VA_ARGS__)   // DPRINTF is a macro, debug print
+#define DPRINTLN(...) Serial.println(__VA_ARGS__) // DPRINTLN is a macro, debug print with new line
 #else
-#define DPRINT(...) //now defines a blank line
+#define DPRINT(...) // now defines a blank line
 #define DPRINTF(...)
 #define DPRINTLN(...)
 #endif
