@@ -26,10 +26,11 @@ public:
     void init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass);
 
     void send(char *topic, Message *msg);
+    void sendReport(Message *msg, SensorType type);
     void subscribe(char *topic);
     void subscribeALL();
 
     esp_mqtt_client_handle_t getClient();
 };
 
-#endif //MQTT_H
+#endif // MQTT_H

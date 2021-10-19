@@ -16,6 +16,24 @@ int *Configuration::wifisIntensity = NULL;
 String *Configuration::wifisSsids = NULL;
 int Configuration::wifisAmount = 0;
 
+float Configuration::v_rms = 0;
+float Configuration::i_rms = 0;
+int Configuration::pot_ativa = 0;
+int Configuration::pot_aparente = 0;
+float Configuration::instantMeasure = 0;
+
+char Configuration::sensor[5][7] = {"NODE01", "Node2", "Node3", "Node4", "Node5"};
+
+SensorType Configuration::sensorType[5] = {
+    SensorType_ENERGY,
+    SensorType_UNDEFINED,
+    SensorType_UNDEFINED,
+    SensorType_UNDEFINED,
+    SensorType_UNDEFINED,
+};
+
+int Configuration::lastPipe = NULL;
+
 void Configuration::generateSerial(uint8_t *macAddress)
 {
     uint8_t aux1[MAC_SIZE];
@@ -210,6 +228,49 @@ void Configuration::setWifisScan(int _wifisAmount, int *_wifisIntensity, String 
     }
 }
 
+void Configuration::setEnergyReport(float _v_rms, float _i_rms, int _pot_ativa, int _pot_aparente)
+{
+    v_rms = _v_rms;
+    i_rms = _i_rms;
+    pot_ativa = _pot_ativa;
+    pot_aparente = _pot_aparente;
+}
+
+void Configuration::setWaterReport(float _instantMeasure)
+{
+    instantMeasure = _instantMeasure;
+}
+
+void Configuration::setLastPipe(int pipe)
+{
+    lastPipe = pipe;
+}
+
+float Configuration::get_instantMeasure()
+{
+    return instantMeasure;
+}
+
+float Configuration::get_v_rms()
+{
+    return v_rms;
+}
+
+float Configuration::get_i_rms()
+{
+    return i_rms;
+}
+
+int Configuration::get_pot_ativa()
+{
+    return pot_ativa;
+}
+
+int Configuration::get_pot_aparente()
+{
+    return pot_aparente;
+}
+
 char *Configuration::getApSsid()
 {
     return Configuration::apSsid;
@@ -233,6 +294,17 @@ char *Configuration::getLocalPassword()
 char *Configuration::getSerial()
 {
     return serial;
+}
+
+char *Configuration::getSensorSerial()
+{
+    if (lastPipe != 0)
+        return sensor[lastPipe - 1];
+}
+
+SensorType Configuration::getSensorType(int pipe)
+{
+    return sensorType[pipe - 1];
 }
 
 int Configuration::getWifisAmount()

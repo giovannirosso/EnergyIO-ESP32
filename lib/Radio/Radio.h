@@ -27,7 +27,7 @@ public:
     ~RADIO();
     void init();
     void changeRole(bool role);
-    void listen();
+    int listen();
     void report();
     bool getRole();
     bool pairingMode();

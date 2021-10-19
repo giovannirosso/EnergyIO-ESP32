@@ -37,6 +37,21 @@ void MQTT::send(char *topic, Message *msg)
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
 }
 
+void MQTT::sendReport(Message *msg, SensorType type)
+{
+    if (!this->isConnected)
+        return;
+    int msg_id;
+    String _topic;
+    if (type == SensorType_ENERGY)
+        _topic = "sensor/" + (String)Configuration::getSensorSerial() + "/energy/report";
+    else if (type == SensorType_WATER)
+        _topic = "sensor/" + (String)Configuration::getSensorSerial() + "/water/report";
+    DPRINTLN(_topic);
+    msg_id = esp_mqtt_client_publish(mqttClient, _topic.c_str(), (const char *)msg->getMessage(), msg->getLength(), 0, 0);
+    ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+}
+
 void MQTT::subscribe(char *topic)
 {
     int msg_id;

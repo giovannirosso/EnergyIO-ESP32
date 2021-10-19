@@ -60,7 +60,7 @@ void RADIO::changeRole(bool role)
     delay(500);
 }
 
-void RADIO::listen()
+int RADIO::listen()
 {
     uint8_t pipe;
     if (nrf24.available(&pipe))
@@ -84,11 +84,25 @@ void RADIO::listen()
         Serial.printf("\n");
         Message income(msg_buffer, msg_length);
 
-        //? if(pipe == ENERGY SENSOR TYPE)
-        income.r_EnergyData();
-        //? elseif(pipe == WATER SENSOR TYPE)
-        // income.r_WaterData();
+        if (Configuration::getSensorType(pipe) == SensorType_WATER)
+        {
+            income.r_WaterData();
+            Configuration::setLastPipe(pipe);
+            return 1;
+        }
+        else if (Configuration::getSensorType(pipe) == SensorType_ENERGY)
+        {
+            income.r_EnergyData();
+            Configuration::setLastPipe(pipe);
+            return 2;
+        }
+        else
+        {
+            DPRINTLN("[SENSOR] NOT FOUND");
+            return 0;
+        }
     }
+    return 0;
 }
 
 void RADIO::report()

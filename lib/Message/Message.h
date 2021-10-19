@@ -8,9 +8,9 @@
 #include "pb_encode.h" // nanopb encode library
 #include "messages.pb.h"
 #include "constants.h"
+#include "Configuration.h"
 
 #include "WString.h"
-
 #include <stdio.h>
 
 #define MAX_SSID_SIZE 128
@@ -27,8 +27,10 @@ private:
 	int user;
 
 public:
-	Message(uint8_t *data, uint16_t length); // construtor genérico
-	Message(char *data, uint16_t length);	 // construtor genéric
+	Message(uint8_t *data, uint16_t length);											 // construtor genérico
+	Message(char *data, uint16_t length);												 // construtor genéric
+	Message(float v_rms, float i_rms, int pot_ativa, int pot_aparente, time_t NTP_time); // construtor energy report
+	Message(float instant, time_t NTP_time);
 	~Message();
 	void print();
 

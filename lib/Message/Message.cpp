@@ -76,6 +76,57 @@ Message::Message(char _serial[10], int32_t _channel)
   this->length = stream.bytes_written;
 }
 
+Message::Message(float v_rms, float i_rms, int pot_ativa, int pot_aparente, time_t NTP_time)
+{
+  this->user = NULL;
+
+  uint8_t buffer[128];
+  EnergyReport msg = EnergyReport_init_zero;
+
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+
+  msg.v_rms = v_rms;
+  msg.i_rms = i_rms;
+  msg.pot_ativa = pot_ativa;
+  msg.pot_aparente = pot_aparente;
+  msg.datetime = NTP_time;
+  pb_encode(&stream, EnergyReport_fields, &msg);
+
+  printf("\nEnergyReport Msg : ");
+  for (int i = 0; i < stream.bytes_written; i++)
+  {
+    data[i] = buffer[i];
+    printf("%02X", buffer[i]);
+  }
+  printf("\n");
+
+  this->length = stream.bytes_written;
+}
+
+Message::Message(float instant, time_t NTP_time)
+{
+  this->user = NULL;
+
+  uint8_t buffer[128];
+  WaterReport msg = WaterReport_init_zero;
+
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+
+  msg.instant = instant;
+  msg.datetime = NTP_time;
+  pb_encode(&stream, WaterReport_fields, &msg);
+
+  printf("\nWaterReport Msg : ");
+  for (int i = 0; i < stream.bytes_written; i++)
+  {
+    data[i] = buffer[i];
+    printf("%02X", buffer[i]);
+  }
+  printf("\n");
+
+  this->length = stream.bytes_written;
+}
+
 void Message::r_EnergyData()
 {
   EnergySensorReport msg = EnergySensorReport_init_zero;
@@ -83,10 +134,13 @@ void Message::r_EnergyData()
   pb_decode(&stream, EnergySensorReport_fields, &msg);
 
   printf("DECODED: Tensao: %.1f - Corrente:%.3f - "
-         "Pot.Ativa:%d - Pot Aparente:%d - Numero de Amostas:%d\r\n",
+         "Pot.Ativa:%d - Pot Aparente:%d - Numero de Msgs:%d\r\n",
          msg.v_rms, msg.i_rms, msg.pot_ativa, msg.pot_aparente, msg.samples);
 
-  // this->user = msg.user;
+  if (msg.samples == 0)
+    Configuration::setEnergyReport(msg.v_rms, msg.i_rms, msg.pot_ativa, msg.pot_aparente);
+  else
+    Configuration::setEnergyReport(msg.v_rms / msg.samples, msg.i_rms / msg.samples, msg.pot_ativa / msg.samples, msg.pot_aparente / msg.samples);
 }
 
 void Message::r_WaterData()
@@ -95,7 +149,12 @@ void Message::r_WaterData()
   pb_istream_t stream = pb_istream_from_buffer(this->dado, this->length);
   pb_decode(&stream, WaterSensorReport_fields, &msg);
 
-  printf("DECODED: Amostras: %d	Instantaneo:%.1f mL/seg\r\n", msg.samples, msg.instant);
+  printf("DECODED: Numero de Msgs: %d	Instantaneo:%.1f mL/seg\r\n", msg.samples, msg.instant);
+
+  if (msg.samples == 0)
+    Configuration::setWaterReport(msg.instant);
+  else
+    Configuration::setWaterReport(msg.instant / msg.samples);
 }
 
 void Message::r_pairingMessage()

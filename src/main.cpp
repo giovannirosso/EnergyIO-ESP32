@@ -59,6 +59,8 @@ void IRAM_ATTR pairingButton()
   }
 }
 
+time_t NTPtime;
+struct tm timeinfo;
 time_t setClock()
 {
   configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
@@ -77,6 +79,15 @@ time_t setClock()
   gmtime_r(&NTPtime, &timeinfo);
   DPRINT("[NTP TIME] Current time: ");
   DPRINT(asctime(&timeinfo));
+  return NTPtime;
+}
+
+unsigned long getTime()
+{
+  if (!getLocalTime(&timeinfo))
+    NTPtime = setClock();
+
+  time(&NTPtime);
   return NTPtime;
 }
 
@@ -169,11 +180,26 @@ void TaskSoftAp(void *pvParameters)
 void TaskNRF(void *pvParameters)
 {
   nrfClient->init();
+  int aux = 0;
   for (;;)
   {
     if (nrfClient->getRole() && initPairing == false)
-      nrfClient->listen();
-    vTaskDelay(500 / portTICK_RATE_MS);
+      aux = nrfClient->listen();
+    if (aux == 1 && mqttClient->isConnected) //?WATER
+    {
+
+      Message message(Configuration::get_instantMeasure(), getTime());
+      mqttClient->sendReport(&message, SensorType_WATER);
+      Configuration::setLastPipe(NULL);
+    }
+    else if (aux == 2 && mqttClient->isConnected) //?EnERGY
+    {
+
+      Message message(Configuration::get_v_rms(), Configuration::get_i_rms(), Configuration::get_pot_ativa(), Configuration::get_pot_aparente(), getTime());
+      mqttClient->sendReport(&message, SensorType_ENERGY);
+      Configuration::setLastPipe(NULL);
+    }
+    vTaskDelay(5 / portTICK_RATE_MS);
   }
 }
 
@@ -333,6 +359,10 @@ void loop()
       Configuration::reset();
       delay(500);
       ESP.restart();
+    }
+    else if (income == "se")
+    {
+      DPRINTLN(Configuration::getSensorSerial());
     }
     else
     {
