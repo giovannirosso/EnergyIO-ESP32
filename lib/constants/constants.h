@@ -19,6 +19,8 @@
 #define MQTT_CONNECTION_TIMEOUT 10000
 #define MQTT_KEEPALIVE 30
 
+#define WARMUP_TIME_MS 10000
+
 #define MQTT_HOST "energyio.ml"
 #define MQTT_PORT 1883
 #define MQTT_USER "device"
@@ -29,8 +31,9 @@
 #define SSID_LOCAL "Rosso"
 #define PASSWORD_LOCAL "055A64F7"
 
-#define TOPIC_TEST_REQUEST "test/request"
-#define TOPIC_TEST_REPORT "test/report"
+#define TOPIC_REGISTER_REQUEST "register/request"
+#define TOPIC_REGISTER_REPORT "register/report"
+#define TOPIC_SENSOR_REGISTER "sensor/register"
 
 ////////////////////        DEBUG FLAGS
 #define DEBUGMODE // Enable debug printing

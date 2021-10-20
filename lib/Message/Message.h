@@ -31,6 +31,8 @@ public:
 	Message(char *data, uint16_t length);												 // construtor genéric
 	Message(float v_rms, float i_rms, int pot_ativa, int pot_aparente, time_t NTP_time); // construtor energy report
 	Message(float instant, time_t NTP_time);
+	Message(char _macAddress[32]);
+	Message(String _sensorSerial, SensorType _type);
 	~Message();
 	void print();
 

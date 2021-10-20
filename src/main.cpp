@@ -181,22 +181,23 @@ void TaskNRF(void *pvParameters)
 {
   nrfClient->init();
   int aux = 0;
+  vTaskDelay(WARMUP_TIME_MS / portTICK_RATE_MS);
+  DPRINTLN("[NRF] Init");
+
   for (;;)
   {
     if (nrfClient->getRole() && initPairing == false)
       aux = nrfClient->listen();
     if (aux == 1 && mqttClient->isConnected) //?WATER
     {
-
       Message message(Configuration::get_instantMeasure(), getTime());
-      mqttClient->sendReport(&message, SensorType_WATER);
+      mqttClient->sensorReport(&message, SensorType_WATER);
       Configuration::setLastPipe(NULL);
     }
     else if (aux == 2 && mqttClient->isConnected) //?EnERGY
     {
-
       Message message(Configuration::get_v_rms(), Configuration::get_i_rms(), Configuration::get_pot_ativa(), Configuration::get_pot_aparente(), getTime());
-      mqttClient->sendReport(&message, SensorType_ENERGY);
+      mqttClient->sensorReport(&message, SensorType_ENERGY);
       Configuration::setLastPipe(NULL);
     }
     vTaskDelay(5 / portTICK_RATE_MS);
@@ -333,7 +334,15 @@ void loop()
       if (nrfClient->listenPairing())
       {
         aux = false;
-        DPRINTLN("[PAIRING] received\n\n");
+        DPRINTLN("[PAIRING] finish\n\n");
+        String Serial = Configuration::getLastRegistered();
+        SensorType type;
+        if (Serial[0] == 'W')
+          type = SensorType_WATER;
+        else if (Serial[0] == 'E')
+          type = SensorType_ENERGY;
+        Message message(Serial, type);
+        mqttClient->send(TOPIC_SENSOR_REGISTER, &message);
       }
       Control::led3(!Control::led3());
       delay(50);

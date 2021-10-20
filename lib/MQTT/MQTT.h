@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <constants.h>
 
-#include <WiFiClient.h>
+#include <WiFi.h>
 #include "Message.h"
 #include "Configuration.h"
 
@@ -26,7 +26,7 @@ public:
     void init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass);
 
     void send(char *topic, Message *msg);
-    void sendReport(Message *msg, SensorType type);
+    void sensorReport(Message *msg, SensorType type);
     void subscribe(char *topic);
     void subscribeALL();
 

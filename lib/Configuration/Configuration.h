@@ -12,6 +12,7 @@
 #include <WString.h>
 
 #define PREFERENCES_NAMESPACE (const char *)"HUB-config"
+#define SENSORS_PROPRETIES (const char *)"SENSORS-config"
 
 #define DEVICE_SERIAL "XX1234ABC"
 #define DEVICE_TYPE "MA"
@@ -47,11 +48,14 @@ private:
     static int pot_aparente;
     static float instantMeasure;
 
+    static int totalSensors;
     static char *serial;
-    static char sensor[5][7];
+    static String sensor[5];
     static int lastPipe;
     static SensorType sensorType[5];
     static bool dirty;
+
+    static String lastRegistered;
 
 public:
     static bool isDirty();
@@ -64,6 +68,7 @@ public:
     static void setWifisScan(int _wifisAmount, int *_wifisIntensity, String *wifisSsid);
     static void setEnergyReport(float _v_rms, float _i_rms, int _pot_ativa, int _pot_aparente);
     static void setWaterReport(float _instant);
+    static void setSensor(char *_sensorSerial, SensorType _type);
 
     static void readLocalWifi();
     static void readApWifi();
@@ -83,7 +88,8 @@ public:
 
     static void generateSerial(uint8_t *macAddress);
     static char *getSerial();
-    static char *getSensorSerial();
+    static String getSensorSerial();
+    static String getLastRegistered();
     static SensorType getSensorType(int pipe);
 };
 

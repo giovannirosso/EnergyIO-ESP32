@@ -127,6 +127,54 @@ Message::Message(float instant, time_t NTP_time)
   this->length = stream.bytes_written;
 }
 
+Message::Message(char _macAddress[32])
+{
+  this->user = NULL;
+
+  uint8_t buffer[128];
+  HubRegister msg = HubRegister_init_zero;
+
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+
+  strcpy(msg.mac_address, _macAddress);
+  strcpy(msg.secret, "segredo");
+  pb_encode(&stream, HubRegister_fields, &msg);
+
+  printf("\nHubRegister Msg : ");
+  for (int i = 0; i < stream.bytes_written; i++)
+  {
+    data[i] = buffer[i];
+    printf("%02X", buffer[i]);
+  }
+  printf("\n");
+
+  this->length = stream.bytes_written;
+}
+
+Message::Message(String _sensorSerial, SensorType _type)
+{
+  this->user = NULL;
+
+  uint8_t buffer[128];
+  SensorRegister msg = SensorRegister_init_zero;
+
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+
+  strcpy(msg.sensor_serial, _sensorSerial.c_str());
+  msg.type = _type;
+  pb_encode(&stream, SensorRegister_fields, &msg);
+
+  printf("\nSensorRegister Msg : ");
+  for (int i = 0; i < stream.bytes_written; i++)
+  {
+    data[i] = buffer[i];
+    printf("%02X", buffer[i]);
+  }
+  printf("\n");
+
+  this->length = stream.bytes_written;
+}
+
 void Message::r_EnergyData()
 {
   EnergySensorReport msg = EnergySensorReport_init_zero;
@@ -164,4 +212,18 @@ void Message::r_pairingMessage()
   pb_decode(&stream, PairingMessage_fields, &msg);
 
   printf("DECODED: Serial: %s	Channel: %d\r\n", msg.serial, msg.channel);
+
+  SensorType type;
+
+  if (msg.serial[0] == 'W')
+    type = SensorType_WATER;
+  else if (msg.serial[0] == 'E')
+    type = SensorType_ENERGY;
+  else
+  {
+    DPRINTF("UNDEFINED SENSOR");
+    return;
+  }
+
+  Configuration::setSensor(msg.serial, type);
 }

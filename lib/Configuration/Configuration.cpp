@@ -22,7 +22,11 @@ int Configuration::pot_ativa = 0;
 int Configuration::pot_aparente = 0;
 float Configuration::instantMeasure = 0;
 
-char Configuration::sensor[5][7] = {"NODE01", "Node2", "Node3", "Node4", "Node5"};
+int Configuration::totalSensors = 0;
+
+String Configuration::sensor[5] = {"", "", "", "", ""};
+
+String Configuration::lastRegistered = "";
 
 SensorType Configuration::sensorType[5] = {
     SensorType_ENERGY,
@@ -93,6 +97,30 @@ void Configuration::readFlash()
 
         prefs.end();
     }
+    if (prefs.begin(SENSORS_PROPRETIES, true))
+    {
+        length = prefs.getBytes("sensor", data, 1024);
+        if (length != 0)
+        {
+            SensorToFlash msg = SensorToFlash_init_zero;
+            pb_istream_t stream = pb_istream_from_buffer(data, length);
+            pb_decode(&stream, SensorToFlash_fields, &msg);
+
+            DPRINTLN("\n[FLASH] SetRF Read");
+            totalSensors = msg.totalSensors;
+            DPRINTLN("[FLASH] Numero de Sensores: " + String(msg.totalSensors));
+            for (int i = 0; i < totalSensors; i++)
+            {
+                DPRINTLN("[FLASH] Sensor Serial " + String(i + 1) + " : " + String(msg.sensorSerial[i]));
+                DPRINTLN("[FLASH] Tipo " + String(i + 1) + " : " + String(msg.sensorType[i]));
+
+                sensor[i] = msg.sensorSerial[i];
+                sensorType[i] = msg.sensorType[i];
+            }
+        }
+
+        prefs.end();
+    }
 }
 
 void Configuration::reset()
@@ -106,7 +134,7 @@ void Configuration::reset()
     }
 }
 
-///////////////////////////////APwifi//////////////////////////////////////
+/////////////////////////////APwifi//////////////////////////////////////
 // void Configuration::setApWifi(char *_apSsid, char *_apPass)
 // {
 //     byte buffer[128];
@@ -246,6 +274,51 @@ void Configuration::setLastPipe(int pipe)
     lastPipe = pipe;
 }
 
+void Configuration::setSensor(char *_sensorSerial, SensorType _type)
+{
+    DPRINTLN("1");
+    byte buffer[512];
+    SensorToFlash msg SensorToFlash_init_zero;
+    pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+    DPRINTLN("2");
+    if (Configuration::totalSensors >= 5)
+    {
+        DPRINTLN("MAX SENSORS REACHED");
+        return;
+    }
+    DPRINTLN("3");
+    sensor[totalSensors] = _sensorSerial;
+    DPRINTLN("4");
+    lastRegistered = _sensorSerial;
+    DPRINTLN("5");
+    sensorType[totalSensors] = _type;
+    DPRINTLN("6");
+    Configuration::totalSensors++;
+
+    DPRINTF("[FLASH] Numero de sensores %d\n", Configuration::totalSensors);
+
+    for (int i = 0; i < 5; i++) // escreve os controles ja cadastrados
+    {
+        strcpy(msg.sensorSerial[i], sensor[i].c_str());
+        msg.sensorType[i] = sensorType[i];
+        DPRINTF("SENSOR NUMBER %d\t msg.sensorSerial[%d] = %s\t msg.sensorType[%d] = %d\n", i + 1, i, msg.sensorSerial[i], i, msg.sensorType[i]);
+    }
+
+    msg.totalSensors = totalSensors;
+
+    pb_encode(&stream, SensorToFlash_fields, &msg);
+    DPRINTF("[FLASH] Bytes escritos: %d", stream.bytes_written);
+    DPRINTLN();
+
+    Preferences prefs;
+    if (prefs.begin(SENSORS_PROPRETIES, false))
+    {
+        prefs.putBytes("sensor", buffer, stream.bytes_written);
+        prefs.end();
+    }
+    dirty = true;
+}
+
 float Configuration::get_instantMeasure()
 {
     return instantMeasure;
@@ -296,7 +369,12 @@ char *Configuration::getSerial()
     return serial;
 }
 
-char *Configuration::getSensorSerial()
+String Configuration::getLastRegistered()
+{
+    return lastRegistered;
+}
+
+String Configuration::getSensorSerial()
 {
     if (lastPipe != 0)
         return sensor[lastPipe - 1];

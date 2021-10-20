@@ -32,21 +32,21 @@ void MQTT::send(char *topic, Message *msg)
     if (!this->isConnected)
         return;
     int msg_id;
-    String _topic = "device/" + (String)Configuration::getSerial() + "/" + (String)topic;
+    String _topic = "hub/" + (String)Configuration::getSerial() + "/" + (String)topic;
     msg_id = esp_mqtt_client_publish(mqttClient, _topic.c_str(), (const char *)msg->getMessage(), msg->getLength(), 0, 0);
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
 }
 
-void MQTT::sendReport(Message *msg, SensorType type)
+void MQTT::sensorReport(Message *msg, SensorType type)
 {
     if (!this->isConnected)
         return;
     int msg_id;
     String _topic;
     if (type == SensorType_ENERGY)
-        _topic = "sensor/" + (String)Configuration::getSensorSerial() + "/energy/report";
+        _topic = "sensor/" + Configuration::getSensorSerial() + "/energy/report";
     else if (type == SensorType_WATER)
-        _topic = "sensor/" + (String)Configuration::getSensorSerial() + "/water/report";
+        _topic = "sensor/" + Configuration::getSensorSerial() + "/water/report";
     DPRINTLN(_topic);
     msg_id = esp_mqtt_client_publish(mqttClient, _topic.c_str(), (const char *)msg->getMessage(), msg->getLength(), 0, 0);
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
@@ -55,14 +55,14 @@ void MQTT::sendReport(Message *msg, SensorType type)
 void MQTT::subscribe(char *topic)
 {
     int msg_id;
-    String _topic = "device/" + (String)Configuration::getSerial() + "/" + (String)topic;
+    String _topic = "hub/" + (String)Configuration::getSerial() + "/" + (String)topic;
     msg_id = esp_mqtt_client_subscribe(mqttClient, _topic.c_str(), 0);
     ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
 }
 
 void MQTT::subscribeALL()
 {
-    subscribe(TOPIC_TEST_REQUEST);
+    subscribe(TOPIC_REGISTER_REQUEST);
     DPRINTLN("[MQTT] Subscribed all");
 }
 
@@ -70,8 +70,8 @@ static void onMqttConnect(void *handler_args, esp_event_base_t base, int32_t eve
 {
     MQTT *self = static_cast<MQTT *>(handler_args);
     DPRINTLN("[MQTT] MQTT_EVENT_CONNECTED");
-    self->subscribeALL();
     self->isConnected = true;
+    self->subscribeALL();
 
     Control::led1(true);
     // Message message(2499, 123456789, DataType::DataType_ANY_DATA);
@@ -97,10 +97,16 @@ static void onMessage(void *handler_args, esp_event_base_t base, int32_t event_i
         {
             Message *message = NULL;
             Message income(event->data, event->data_len);
-
-            if (strncmp(event->topic, String("device/" + String(Configuration::getSerial()) + "/" + TOPIC_TEST_REQUEST).c_str(), event->topic_len) == 0)
+            if (strncmp(event->topic, String("hub/" + String(Configuration::getSerial()) + "/" + TOPIC_REGISTER_REQUEST).c_str(), event->topic_len) == 0)
             {
-                // income.r_userData();
+                DPRINTLN(event->topic);
+                String macAddress = WiFi.macAddress();
+                Serial.println(macAddress);
+                Serial.println(sizeof(macAddress));
+                char mac[32];
+                strcpy(mac, macAddress.c_str());
+                message = new Message(mac);
+                self->send(TOPIC_REGISTER_REPORT, message);
             }
             // else if (String(topic) == "device/" + String() + "/" + TOPIC_TEST_REQUEST)
             // {
@@ -125,8 +131,7 @@ void MQTT::init(const char *host, uint16_t port, const char *mqtt_user, const ch
     DPRINTLN("[MQTT] " + (String)host);
     DPRINTF("[MQTT] MQTT PORT: %d\n", port);
 
-    String ClientId = DEVICE_TYPE;
-    ClientId += "-";
+    String ClientId;
     ClientId += String(Configuration::getSerial());
 
     const esp_mqtt_client_config_t mqtt_cfg = {
