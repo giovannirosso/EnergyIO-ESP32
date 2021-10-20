@@ -3,7 +3,7 @@
 uint8_t data[32];
 uint16_t length;
 
-uint8_t RADIO::node_address[6][6] = {"Hub00", "Node1", "Node2", "Node3", "Node4", "Node5"};
+// uint8_t RADIO::node_address[6][6] = {"Hub00", "EA101", "Node2", "Node3", "Node4", "Node5"};
 
 RADIO::RADIO()
 {
@@ -31,13 +31,25 @@ void RADIO::init()
     nrf24.enableAckPayload();
     nrf24.setPayloadSize(32);
     // nrf24.setChannel(CHANNEL);
+    String aux = Configuration::getSerial();
+    uint8_t hubSerial[5];
+    uint8_t sensor[5][6];
+    for (int i = 0; i < 5; i++)
+    {
+        hubSerial[i] = aux[i];
+        sensor[0][i] = Configuration::getSensorSerial()[0][i];
+        sensor[1][i] = Configuration::getSensorSerial()[1][i];
+        sensor[2][i] = Configuration::getSensorSerial()[2][i];
+        sensor[3][i] = Configuration::getSensorSerial()[3][i];
+        sensor[4][i] = Configuration::getSensorSerial()[4][i];
+    }
 
-    nrf24.openWritingPipe(node_address[0]);
-    nrf24.openReadingPipe(1, node_address[1]);
-    // nrf24.openReadingPipe(2, node_address[2]);
-    // nrf24.openReadingPipe(3, node_address[3]);
-    // nrf24.openReadingPipe(4, node_address[4]);
-    // nrf24.openReadingPipe(5, node_address[5]);
+    nrf24.openWritingPipe(hubSerial);
+    nrf24.openReadingPipe(1, sensor[0]);
+    nrf24.openReadingPipe(2, sensor[1]);
+    nrf24.openReadingPipe(3, sensor[2]);
+    nrf24.openReadingPipe(4, sensor[3]);
+    nrf24.openReadingPipe(5, sensor[4]);
 
     changeRole(nrfRole);
     nrf24.printPrettyDetails();
@@ -107,15 +119,6 @@ int RADIO::listen()
 
 void RADIO::report()
 {
-    int j = 0;
-    for (int i = 0; i < 32; i++)
-    {
-        data[i] = j;
-        if (j == 9)
-            j = 0;
-        j++;
-    }
-
     unsigned long start_time = millis();              //
     bool reported = nrf24.write(&data, sizeof(data)); // transmit & save the report
     unsigned long end_time = millis();

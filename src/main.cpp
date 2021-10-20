@@ -297,6 +297,7 @@ void loop()
     if ((unsigned long)(millis()) - start > timeout)
     {
       Serial.println("[CONFIGS] Factory Reset");
+      Configuration::reset();
       delay(500);
       ESP.restart();
     }
@@ -343,6 +344,8 @@ void loop()
           type = SensorType_ENERGY;
         Message message(Serial, type);
         mqttClient->send(TOPIC_SENSOR_REGISTER, &message);
+        delay(1000);
+        ESP.restart();
       }
       Control::led3(!Control::led3());
       delay(50);
@@ -371,7 +374,7 @@ void loop()
     }
     else if (income == "se")
     {
-      DPRINTLN(Configuration::getSensorSerial());
+      DPRINTLN(Configuration::getSensorInPipeSerial());
     }
     else
     {
