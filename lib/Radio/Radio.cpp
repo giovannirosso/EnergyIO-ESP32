@@ -44,7 +44,8 @@ void RADIO::init()
         sensor[4][i] = Configuration::getSensorSerial()[4][i];
     }
 
-    nrf24.openWritingPipe(hubSerial);
+    uint8_t teta[6] = "HUB01";
+    nrf24.openWritingPipe(teta);
     nrf24.openReadingPipe(1, sensor[0]);
     nrf24.openReadingPipe(2, sensor[1]);
     nrf24.openReadingPipe(3, sensor[2]);
