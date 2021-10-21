@@ -132,6 +132,11 @@ void Configuration::reset()
         prefs.clear();
         prefs.end();
     }
+    if (prefs.begin(SENSORS_PROPRETIES, false))
+    {
+        prefs.clear();
+        prefs.end();
+    }
 }
 
 ///////////////////////////// APwifi //////////////////////////////////////
@@ -317,10 +322,15 @@ String Configuration::getLastRegistered()
     return lastRegistered;
 }
 
-String Configuration::getSensorSerial()
+String Configuration::getSensorInPipeSerial()
 {
     if (lastPipe != 0)
         return sensor[lastPipe - 1];
+}
+
+String *Configuration::getSensorSerial()
+{
+    return sensor;
 }
 
 SensorType Configuration::getSensorType(int pipe)

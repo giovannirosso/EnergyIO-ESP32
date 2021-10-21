@@ -88,7 +88,8 @@ public:
 
     static void generateSerial(uint8_t *macAddress);
     static char *getSerial();
-    static String getSensorSerial();
+    static String *getSensorSerial();
+    static String getSensorInPipeSerial();
     static String getLastRegistered();
     static SensorType getSensorType(int pipe);
 };
