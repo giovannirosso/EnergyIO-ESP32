@@ -134,114 +134,57 @@ void Configuration::reset()
     }
 }
 
-/////////////////////////////APwifi//////////////////////////////////////
-// void Configuration::setApWifi(char *_apSsid, char *_apPass)
-// {
-//     byte buffer[128];
-//     setWifi_ msg setWifi__init_zero;
-//     pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+///////////////////////////// APwifi //////////////////////////////////////
+void Configuration::setApWifi(String _apSsid, String _apPass)
+{
+    Preferences prefs;
 
-//     if (_apSsid != NULL)
-//     {
-//         strcpy(msg.apSsid, _apSsid);
-//         strcpy(apSsid, _apSsid);
-//     }
-//     else
-//     {
-//         strcpy(msg.apSsid, apSsid);
-//     }
-//     if (_apPass != NULL)
-//     {
-//         strcpy(msg.apPass, _apPass);
-//         strcpy(apPass, _apPass);
-//     }
-//     else
-//     {
-//         strcpy(msg.apPass, apPass);
-//     }
+    if (prefs.begin(PREFERENCES_NAMESPACE))
+    {
+        prefs.putString('/ap/ssid', _apSsid);
+        prefs.putString('/ap/password', _apPass);
+    }
+}
 
-//     pb_encode(&stream, setWifi__fields, &msg);
+void Configuration::readApWifi()
+{
+    Preferences prefs;
 
-//     Preferences prefs;
-//     if (prefs.begin(PREFERENCES_NAMESPACE, false))
-//     {
-//         prefs.putBytes("apwifi", buffer, stream.bytes_written);
-//         prefs.end();
-//     }
-//     dirty = true;
-// }
+     if (prefs.begin(PREFERENCES_NAMESPACE))
+     {
+         String ssid = prefs.getString('/ap/ssid', DEFAULT_AP_SSID);
+         String password = prefs.getString('/ap/password', DEFAULT_AP_PASSWORD);
 
-// void Configuration::readApWifi()
-// {
-//     if (length != 0)
-//     {
-//         setWifi_ msg setWifi__init_zero;
-//         pb_istream_t stream = pb_istream_from_buffer(data, length);
-//         pb_decode(&stream, setWifi__fields, &msg);
-
-//         DPRINTLN("\n[FLASH] Wifi AP Read");
-//         DPRINTLN("[FLASH] ApSsid: " + String(msg.apSsid));
-//         DPRINTLN("[FLASH] ApPass: " + String(msg.apPass));
-
-//         strcpy(apSsid, msg.apSsid);
-//         strcpy(apPass, msg.apPass);
-//     }
-// }
+         strcpy(localSsid, ssid.c_str());
+         strcpy(localPass, password.c_str());
+     }
+}
 
 // ///////////////////////////////LOCAL WIFI//////////////////////////////////
-// void Configuration::setLocal(char *_localSsid, char *_localPass)
-// {
-//     byte buffer[128];
-//     setLocal_ msg setLocal__init_zero;
-//     pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+void Configuration::setLocal(String _apSsid, String _apPass)
+{
+    Preferences prefs;
 
-//     if (_localSsid != NULL)
-//     {
-//         strcpy(msg.localSsid, _localSsid);
-//         strcpy(localSsid, _localSsid);
-//     }
-//     else
-//     {
-//         strcpy(msg.localSsid, localSsid);
-//     }
+    if (prefs.begin(PREFERENCES_NAMESPACE))
+    {
+        prefs.putString('/local/ssid', _apSsid);
+        prefs.putString('/local/password', _apPass);
+    }
+}
 
-//     if (_localPass != NULL)
-//     {
-//         strcpy(msg.localPass, _localPass);
-//         strcpy(localPass, _localPass);
-//     }
-//     else
-//     {
-//         strcpy(msg.localPass, localPass);
-//     }
+void Configuration::readLocalWifi()
+{
+    Preferences prefs;
 
-//     pb_encode(&stream, setLocal__fields, &msg);
+     if (prefs.begin(PREFERENCES_NAMESPACE))
+     {
+         String ssid = prefs.getString('/local/ssid', DEFAULT_AP_SSID);
+         String password = prefs.getString('/local/password', DEFAULT_AP_PASSWORD);
 
-//     Preferences prefs;
-//     if (prefs.begin(PREFERENCES_NAMESPACE, false))
-//     {
-//         prefs.putBytes("localwifi", buffer, stream.bytes_written);
-//         prefs.end();
-//     }
-//     dirty = true;
-// }
-
-// void Configuration::readLocalWifi()
-// {
-//     if (length != 0)
-//     {
-//         setLocal_ msg setLocal__init_zero;
-//         pb_istream_t stream = pb_istream_from_buffer(data, length);
-//         pb_decode(&stream, setLocal__fields, &msg);
-
-//         DPRINTLN("\n[FLASH] Wifi Local Read");
-//         DPRINTLN("[FLASH] LocalSsid: " + String(msg.localSsid));
-//         DPRINTLN("[FLASH] LocalPass: " + String(msg.localPass));
-
-//         strcpy(localSsid, msg.localSsid);
-//         strcpy(localPass, msg.localPass);
-//     }
-// }
+         strcpy(localSsid, ssid.c_str());
+         strcpy(localPass, password.c_str());
+     }
+}
 
 void Configuration::setWifisScan(int _wifisAmount, int *_wifisIntensity, String *_wifisSsid)
 {
