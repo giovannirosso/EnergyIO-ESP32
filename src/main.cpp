@@ -339,15 +339,17 @@ void loop()
       if (nrfClient->listenPairing())
       {
         aux = false;
-        DPRINTLN("[PAIRING] finish\n\n");
         String Serial = Configuration::getLastRegistered();
         SensorType type;
         if (Serial[0] == 'W')
           type = SensorType_WATER;
         else if (Serial[0] == 'E')
           type = SensorType_ENERGY;
+        else
+          return;
         Message message(Serial, type);
         mqttClient->send(TOPIC_SENSOR_REGISTER, &message);
+        DPRINTLN("[PAIRING] SUCCESS\n\n");
         delay(1000);
         ESP.restart();
       }
