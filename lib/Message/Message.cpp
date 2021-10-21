@@ -24,7 +24,7 @@ void Message::print()
   {
     DPRINTF("%02X", data[i]);
   }
-  DPRINTLN();
+  Serial.println();
 }
 
 Message::~Message()

@@ -76,7 +76,7 @@ time_t setClock()
     DPRINT(".");
     NTPtime = time(nullptr);
   }
-  DPRINTLN("");
+  Serial.println("");
   struct tm timeinfo;
   gmtime_r(&NTPtime, &timeinfo);
   DPRINT("[NTP TIME] Current time: ");
@@ -101,7 +101,7 @@ void TaskBlink(void *pvParameters)
   {
     if (WiFi.status() == WL_CONNECTED && mqttClient->connected())
     {
-      DPRINTLN("[LED] Task Suspended");
+      Serial.println("[LED] Task Suspended");
       vTaskSuspend(NULL);
     }
     else
@@ -114,7 +114,7 @@ void TaskBlink(void *pvParameters)
 
 void WifiDisconnected(WiFiEvent_t event)
 {
-  DPRINTLN("[WIFI] Disconnected from WiFi");
+  Serial.println("[WIFI] Disconnected from WiFi");
   mqttClient->disconnect();
   WiFi.removeEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
   vTaskResume(wifiHandler);
@@ -124,7 +124,7 @@ void WifiDisconnected(WiFiEvent_t event)
 void WifiGotIp(WiFiEvent_t event)
 {
   DPRINT("[WIFI] Obtained IP address: ");
-  DPRINTLN(WiFi.localIP());
+  Serial.println(WiFi.localIP());
   setClock();
   esp_mqtt_client_reconnect(mqttClient->getClient());
   WiFi.onEvent(WifiDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
@@ -138,13 +138,13 @@ void TaskWifi(void *pvParameters)
   {
     if (WiFi.status() == WL_CONNECTED)
     {
-      DPRINTLN("\n[WIFI] Task Suspended");
+      Serial.println("\n[WIFI] Task Suspended");
       vTaskSuspend(NULL);
       // vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
 
     WiFi.begin(Configuration::getLocalSsid(), Configuration::getLocalPassword());
-    DPRINTLN("[WIFI] Connecting to " + String(Configuration::getLocalSsid()));
+    Serial.println("[WIFI] Connecting to " + String(Configuration::getLocalSsid()));
     DPRINTF("[WIFI] MODE: %d\n", WiFi.getMode());
     vTaskSuspend(blinkHandler);
 
@@ -158,7 +158,7 @@ void TaskWifi(void *pvParameters)
 
     if (WiFi.status() != WL_CONNECTED)
     {
-      DPRINTLN("[WIFI] Connection failed, retry in 60s");
+      Serial.println("[WIFI] Connection failed, retry in 60s");
       mqttClient->disconnect();
       vTaskDelay(WIFI_RETRY_TIME_MS / portTICK_PERIOD_MS);
     }
@@ -184,7 +184,7 @@ void TaskNRF(void *pvParameters)
   nrfClient->init();
   int aux = 0;
   vTaskDelay(WARMUP_TIME_MS / portTICK_RATE_MS);
-  DPRINTLN("[NRF] Init");
+  Serial.println("[NRF] Init");
 
   for (;;)
   {
@@ -214,7 +214,7 @@ void setup()
   uint8_t macAddress[6];
   WiFi.macAddress(macAddress);
   Configuration::generateSerial(macAddress);
-  DPRINTLN(FIRMWARE_VERSION);
+  Serial.println(FIRMWARE_VERSION);
   Serial.println("\n\n[SETUP] EnergyIO ");
   DPRINTF("\n[SETUP] Serial: %s\n", Configuration::getSerial());
 
@@ -260,7 +260,7 @@ void setup()
     wifisSsid[i] = WiFi.SSID(i);
     wifisIntensity[i] = WiFi.RSSI(i);
     DPRINTF("[SETUP] Wifi %d SSID: %s\tIntensity: %d", i, WiFi.SSID(i).c_str(), WiFi.RSSI(i));
-    DPRINTLN();
+    Serial.println();
   }
   Configuration::setWifisScan(wifisAmount, wifisIntensity, wifisSsid);
 
@@ -349,7 +349,6 @@ void loop()
           return;
         Message message(Serial, type);
         mqttClient->send(TOPIC_SENSOR_REGISTER, &message);
-        DPRINTLN("[PAIRING] SUCCESS\n\n");
         delay(1000);
         ESP.restart();
       }
@@ -368,24 +367,24 @@ void loop()
     String income = Serial.readString();
     if (income == "getSerial")
     {
-      DPRINTLN(Configuration::getSerial());
+      Serial.println(Configuration::getSerial());
     }
     else if (income == "reset")
     {
       Control::led1(false);
-      DPRINTLN("[RESET]");
+      Serial.println("[RESET]");
       Configuration::reset();
       delay(500);
       ESP.restart();
     }
     else if (income == "se")
     {
-      DPRINTLN(Configuration::getSensorInPipeSerial());
+      Serial.println(Configuration::getSensorInPipeSerial());
     }
     else
     {
-      DPRINTLN(income);
-      DPRINTLN("is NOT CODED");
+      Serial.println(income);
+      Serial.println("is NOT CODED");
     }
   }
 }

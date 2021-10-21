@@ -61,14 +61,14 @@ void RADIO::changeRole(bool role)
     if (role)
     {
         nrf24.startListening(); // put radio in RX mode //! true = RX
-        DPRINTLN("startListening");
+        Serial.println("startListening");
     }
     else
     {
         nrf24.stopListening(); // put radio in TX mode  //! false = TX
-        DPRINTLN("stopListening");
+        Serial.println("stopListening");
     }
-    DPRINTLN("Role changed");
+    Serial.println("Role changed");
     nrfRole = role;
     delay(500);
 }
@@ -111,7 +111,7 @@ int RADIO::listen()
         }
         else
         {
-            DPRINTLN("[SENSOR] NOT FOUND");
+            Serial.println("[SENSOR] NOT FOUND");
             return 0;
         }
     }

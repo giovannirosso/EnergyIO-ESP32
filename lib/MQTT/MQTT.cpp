@@ -47,7 +47,7 @@ void MQTT::sensorReport(Message *msg, SensorType type)
         _topic = "sensor/" + Configuration::getSensorInPipeSerial() + "/energy/report";
     else if (type == SensorType_WATER)
         _topic = "sensor/" + Configuration::getSensorInPipeSerial() + "/water/report";
-    DPRINTLN(_topic);
+    Serial.println(_topic);
     msg_id = esp_mqtt_client_publish(mqttClient, _topic.c_str(), (const char *)msg->getMessage(), msg->getLength(), 0, 0);
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
 }
@@ -63,13 +63,13 @@ void MQTT::subscribe(char *topic)
 void MQTT::subscribeALL()
 {
     subscribe(TOPIC_REGISTER_REQUEST);
-    DPRINTLN("[MQTT] Subscribed all");
+    Serial.println("[MQTT] Subscribed all");
 }
 
 static void onMqttConnect(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
     MQTT *self = static_cast<MQTT *>(handler_args);
-    DPRINTLN("[MQTT] MQTT_EVENT_CONNECTED");
+    Serial.println("[MQTT] MQTT_EVENT_CONNECTED");
     self->isConnected = true;
     self->subscribeALL();
 
@@ -81,13 +81,13 @@ static void onMqttConnect(void *handler_args, esp_event_base_t base, int32_t eve
 static void onMqttDisconnect(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
     MQTT *self = static_cast<MQTT *>(handler_args);
-    DPRINTLN("[MQTT] MQTT_EVENT_DISCONNECTED");
+    Serial.println("[MQTT] MQTT_EVENT_DISCONNECTED");
     self->disconnect();
 }
 
 static void onMessage(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    DPRINTLN("[MQTT] MQTT_EVENT_DATA");
+    Serial.println("[MQTT] MQTT_EVENT_DATA");
     MQTT *self = static_cast<MQTT *>(handler_args);
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
 
@@ -99,7 +99,7 @@ static void onMessage(void *handler_args, esp_event_base_t base, int32_t event_i
             Message income(event->data, event->data_len);
             if (strncmp(event->topic, String("hub/" + String(Configuration::getSerial()) + "/" + TOPIC_REGISTER_REQUEST).c_str(), event->topic_len) == 0)
             {
-                DPRINTLN(event->topic);
+                Serial.println(event->topic);
                 String macAddress = WiFi.macAddress();
                 Serial.println(macAddress);
                 Serial.println(sizeof(macAddress));
@@ -114,7 +114,7 @@ static void onMessage(void *handler_args, esp_event_base_t base, int32_t event_i
             if (message != NULL)
             {
                 delete message;
-                DPRINTLN("Deleted");
+                Serial.println("Deleted");
             }
         }
     }
@@ -127,8 +127,8 @@ esp_mqtt_client_handle_t MQTT::getClient()
 
 void MQTT::init(const char *host, uint16_t port, const char *mqtt_user, const char *mqtt_pass)
 {
-    DPRINTLN("[MQTT] Trying to connect to server ");
-    DPRINTLN("[MQTT] " + (String)host);
+    Serial.println("[MQTT] Trying to connect to server ");
+    Serial.println("[MQTT] " + (String)host);
     DPRINTF("[MQTT] MQTT PORT: %d\n", port);
 
     String ClientId;
