@@ -74,7 +74,7 @@ void Configuration::generateSerial(uint8_t *macAddress)
     }
 
     serial = _serial;
-    DPRINTLN(serial);
+    Serial.println(serial);
 }
 
 bool Configuration::isDirty()
@@ -106,13 +106,13 @@ void Configuration::readFlash()
             pb_istream_t stream = pb_istream_from_buffer(data, length);
             pb_decode(&stream, SensorToFlash_fields, &msg);
 
-            DPRINTLN("\n[FLASH] SetRF Read");
+            Serial.println("\n[FLASH] SetRF Read");
             totalSensors = msg.totalSensors;
-            DPRINTLN("[FLASH] Numero de Sensores: " + String(msg.totalSensors));
+            Serial.println("[FLASH] Numero de Sensores: " + String(msg.totalSensors));
             for (int i = 0; i < totalSensors; i++)
             {
-                DPRINTLN("[FLASH] Sensor Serial " + String(i + 1) + " : " + String(msg.sensorSerial[i]));
-                DPRINTLN("[FLASH] Tipo " + String(i + 1) + " : " + String(msg.sensorType[i]));
+                Serial.println("[FLASH] Sensor Serial " + String(i + 1) + " : " + String(msg.sensorSerial[i]));
+                Serial.println("[FLASH] Tipo " + String(i + 1) + " : " + String(msg.sensorType[i]));
 
                 sensor[i] = msg.sensorSerial[i];
                 sensorType[i] = msg.sensorType[i];
@@ -126,7 +126,7 @@ void Configuration::readFlash()
 void Configuration::reset()
 {
     Preferences prefs;
-    DPRINTLN("[NVS_FLASH] Limpando Flash");
+    Serial.println("[NVS_FLASH] Limpando Flash");
     if (prefs.begin(PREFERENCES_NAMESPACE, false))
     {
         prefs.clear();
@@ -155,14 +155,14 @@ void Configuration::readApWifi()
 {
     Preferences prefs;
 
-     if (prefs.begin(PREFERENCES_NAMESPACE))
-     {
-         String ssid = prefs.getString("/ap/ssid", DEFAULT_AP_SSID);
-         String password = prefs.getString("/ap/password", DEFAULT_AP_PASSWORD);
+    if (prefs.begin(PREFERENCES_NAMESPACE))
+    {
+        String ssid = prefs.getString("/ap/ssid", DEFAULT_AP_SSID);
+        String password = prefs.getString("/ap/password", DEFAULT_AP_PASSWORD);
 
-         strcpy(localSsid, ssid.c_str());
-         strcpy(localPass, password.c_str());
-     }
+        strcpy(localSsid, ssid.c_str());
+        strcpy(localPass, password.c_str());
+    }
 }
 
 // ///////////////////////////////LOCAL WIFI//////////////////////////////////
@@ -181,14 +181,14 @@ void Configuration::readLocalWifi()
 {
     Preferences prefs;
 
-     if (prefs.begin(PREFERENCES_NAMESPACE))
-     {
-         String ssid = prefs.getString("/local/ssid", DEFAULT_AP_SSID);
-         String password = prefs.getString("/local/password", DEFAULT_AP_PASSWORD);
+    if (prefs.begin(PREFERENCES_NAMESPACE))
+    {
+        String ssid = prefs.getString("/local/ssid", DEFAULT_AP_SSID);
+        String password = prefs.getString("/local/password", DEFAULT_AP_PASSWORD);
 
-         strcpy(localSsid, ssid.c_str());
-         strcpy(localPass, password.c_str());
-     }
+        strcpy(localSsid, ssid.c_str());
+        strcpy(localPass, password.c_str());
+    }
 }
 
 void Configuration::setWifisScan(int _wifisAmount, int *_wifisIntensity, String *_wifisSsid)
@@ -224,23 +224,23 @@ void Configuration::setLastPipe(int pipe)
 
 void Configuration::setSensor(char *_sensorSerial, SensorType _type)
 {
-    DPRINTLN("1");
+    Serial.println("1");
     byte buffer[512];
     SensorToFlash msg SensorToFlash_init_zero;
     pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
-    DPRINTLN("2");
+    Serial.println("2");
     if (Configuration::totalSensors >= 5)
     {
-        DPRINTLN("MAX SENSORS REACHED");
+        Serial.println("MAX SENSORS REACHED");
         return;
     }
-    DPRINTLN("3");
+    Serial.println("3");
     sensor[totalSensors] = _sensorSerial;
-    DPRINTLN("4");
+    Serial.println("4");
     lastRegistered = _sensorSerial;
-    DPRINTLN("5");
+    Serial.println("5");
     sensorType[totalSensors] = _type;
-    DPRINTLN("6");
+    Serial.println("6");
     Configuration::totalSensors++;
 
     DPRINTF("[FLASH] Numero de sensores %d\n", Configuration::totalSensors);
@@ -256,7 +256,7 @@ void Configuration::setSensor(char *_sensorSerial, SensorType _type)
 
     pb_encode(&stream, SensorToFlash_fields, &msg);
     DPRINTF("[FLASH] Bytes escritos: %d", stream.bytes_written);
-    DPRINTLN();
+    Serial.println();
 
     Preferences prefs;
     if (prefs.begin(SENSORS_PROPRETIES, false))

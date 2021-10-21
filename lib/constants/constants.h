@@ -45,11 +45,11 @@
 #ifdef DEBUGMODE                                  // Macros are usually in all capital letters.
 #define DPRINT(...) Serial.print(__VA_ARGS__)     // DPRINT is a macro, debug print
 #define DPRINTF(...) Serial.printf(__VA_ARGS__)   // DPRINTF is a macro, debug print
-#define DPRINTLN(...) Serial.println(__VA_ARGS__) // DPRINTLN is a macro, debug print with new line
+#define DPRINTLN(...) Serial.println(__VA_ARGS__) // Serial.println is a macro, debug print with new line
 #else
 #define DPRINT(...) // now defines a blank line
 #define DPRINTF(...)
-#define DPRINTLN(...)
+#define Serial .println(...)
 #endif
 
 #ifdef DEBUGMODE_LOCAL
