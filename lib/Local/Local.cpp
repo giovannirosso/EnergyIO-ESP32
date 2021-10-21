@@ -15,7 +15,7 @@ Local::Local(String ssid, String password)
 
     if (!WiFi.softAP(ssid.c_str(), password.c_str()))
     {
-        DPRINT("Failed to initialize SoftAP");
+        DPRINTF("Failed to initialize SoftAP");
         return;
     }
     vTaskDelay(500);
@@ -31,7 +31,7 @@ Local::Local(String ssid, String password)
     this->server->on("/wifis", HTTP_POST, [this]()
                      { wifiListRequestHandler(); });
 
-    this->server->serveStatic("/", SPIFFS, "/index.html");
+    this->server->serveStatic("/", SPIFFS, "/");
 
     this->server->enableCORS();
     this->server->begin(SERVER_PORT);

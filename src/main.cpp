@@ -11,6 +11,7 @@
 #include "freertos/task.h"
 #include "esp_task_wdt.h"
 #include "Local.h"
+#include "SPIFFS.h"
 
 void TaskBlink(void *pvParameters);
 void TaskWifi(void *pvParameters);
@@ -211,6 +212,8 @@ void setup()
   // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
 
   Serial.begin(115200);
+  SPIFFS.begin(true);
+
   uint8_t macAddress[6];
   WiFi.macAddress(macAddress);
   Configuration::generateSerial(macAddress);
