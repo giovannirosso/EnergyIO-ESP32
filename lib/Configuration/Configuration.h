@@ -63,8 +63,8 @@ public:
     static void reset();
 
     static void setLastPipe(int pipe);
-    static void setApWifi(char *_apSsid, char *_apPass);
-    static void setLocal(char *_localSsid, char *_localPass);
+    static void setApWifi(String _apSsid, String _apPass);
+    static void setLocal(String _localSsid, String _localPass);
     static void setWifisScan(int _wifisAmount, int *_wifisIntensity, String *wifisSsid);
     static void setEnergyReport(float _v_rms, float _i_rms, int _pot_ativa, int _pot_aparente);
     static void setWaterReport(float _instant);

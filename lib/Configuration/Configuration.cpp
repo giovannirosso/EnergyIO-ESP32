@@ -146,8 +146,8 @@ void Configuration::setApWifi(String _apSsid, String _apPass)
 
     if (prefs.begin(PREFERENCES_NAMESPACE))
     {
-        prefs.putString('/ap/ssid', _apSsid);
-        prefs.putString('/ap/password', _apPass);
+        prefs.putString("/ap/ssid", _apSsid);
+        prefs.putString("/ap/password", _apPass);
     }
 }
 
@@ -157,8 +157,8 @@ void Configuration::readApWifi()
 
      if (prefs.begin(PREFERENCES_NAMESPACE))
      {
-         String ssid = prefs.getString('/ap/ssid', DEFAULT_AP_SSID);
-         String password = prefs.getString('/ap/password', DEFAULT_AP_PASSWORD);
+         String ssid = prefs.getString("/ap/ssid", DEFAULT_AP_SSID);
+         String password = prefs.getString("/ap/password", DEFAULT_AP_PASSWORD);
 
          strcpy(localSsid, ssid.c_str());
          strcpy(localPass, password.c_str());
@@ -172,8 +172,8 @@ void Configuration::setLocal(String _apSsid, String _apPass)
 
     if (prefs.begin(PREFERENCES_NAMESPACE))
     {
-        prefs.putString('/local/ssid', _apSsid);
-        prefs.putString('/local/password', _apPass);
+        prefs.putString("/local/ssid", _apSsid);
+        prefs.putString("/local/password", _apPass);
     }
 }
 
@@ -183,8 +183,8 @@ void Configuration::readLocalWifi()
 
      if (prefs.begin(PREFERENCES_NAMESPACE))
      {
-         String ssid = prefs.getString('/local/ssid', DEFAULT_AP_SSID);
-         String password = prefs.getString('/local/password', DEFAULT_AP_PASSWORD);
+         String ssid = prefs.getString("/local/ssid", DEFAULT_AP_SSID);
+         String password = prefs.getString("/local/password", DEFAULT_AP_PASSWORD);
 
          strcpy(localSsid, ssid.c_str());
          strcpy(localPass, password.c_str());

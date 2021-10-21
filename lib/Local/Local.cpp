@@ -22,13 +22,13 @@ Local::Local(String ssid, String password)
 
     this->server = new WebServer();
 
-    this->server->on('/local', HTTP_POST, [this]()
+    this->server->on("/local", HTTP_POST, [this]()
                      { wifiRequestHandler(); });
-    this->server->on('/hub', HTTP_POST, [this]()
+    this->server->on("/hub", HTTP_POST, [this]()
                      { wifiRequestHandler(); });
-    this->server->on('/save', HTTP_POST, [this]()
+    this->server->on("/save", HTTP_POST, [this]()
                      { saveRequestHandler(); });
-    this->server->on('/wifis', HTTP_POST, [this]()
+    this->server->on("/wifis", HTTP_POST, [this]()
                      { wifiListRequestHandler(); });
 
     this->server->serveStatic("/", SPIFFS, "/index.html");
@@ -61,8 +61,8 @@ void Local::wifiRequestHandler()
         return;
     }
 
-    String ssid = this->server->arg('ssid');
-    String password = this->server->arg('password');
+    String ssid = this->server->arg("ssid");
+    String password = this->server->arg("password");
 
     if (this->server->uri() == "/local")
     {
@@ -120,4 +120,9 @@ void Local::wifiListRequestHandler()
     wifis += "]";
 
     this->server->send(200, "application/x-www-form-urlencoded", wifis);
+}
+
+void Local::handle()
+{
+    this->server->handleClient();
 }
