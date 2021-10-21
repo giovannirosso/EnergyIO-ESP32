@@ -35,6 +35,8 @@
 #define TOPIC_REGISTER_REPORT "register/report"
 #define TOPIC_SENSOR_REGISTER "sensor/register"
 
+#define SERVER_PORT 80
+
 ////////////////////        DEBUG FLAGS
 #define DEBUGMODE // Enable debug printing
 #define DEBUGMODE_LOCAL
