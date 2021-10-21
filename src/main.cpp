@@ -10,6 +10,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_task_wdt.h"
+#include "Local.h"
 
 void TaskBlink(void *pvParameters);
 void TaskWifi(void *pvParameters);
@@ -17,6 +18,7 @@ void TaskWifi(void *pvParameters);
 
 MQTT *mqttClient;
 RADIO *nrfClient;
+Local *localServer;
 
 Ticker mqttReconnectTicker;
 
@@ -170,7 +172,7 @@ void TaskSoftAp(void *pvParameters)
   for (;;)
   {
     xSemaphoreTake(sema_SoftAP, portMAX_DELAY); // whiles server.loop() is running no other mqtt operations should be in process
-    // server.loop();
+    localServer->handle();
     xSemaphoreGive(sema_SoftAP);
     vTaskDelay(2 / portTICK_RATE_MS);
   }
@@ -266,6 +268,8 @@ void setup()
   // server.connect(Configuration::getApSsid(), Configuration::getApPassword());
   // DPRINTF("[LOCAL] MODE: %d\n", WiFi.getMode());
 
+  localServer = new Local(Configuration::getApSsid(), Configuration::getApPassword());
+
   mqttClient = new MQTT();
   nrfClient = new RADIO();
 
@@ -274,7 +278,7 @@ void setup()
 
   xTaskCreatePinnedToCore(TaskBlink, "TaskBlink", 1024, NULL, 1, &blinkHandler, 1);
   xTaskCreatePinnedToCore(TaskWifi, "TaskWifi", 1024 * 16, NULL, 5, &wifiHandler, 0);
-  // xTaskCreatePinnedToCore(TaskSoftAp, "TaskSoftAp", 1024 * 4, NULL, 4, NULL, 1);
+  xTaskCreatePinnedToCore(TaskSoftAp, "TaskSoftAp", 1024 * 4, NULL, 4, NULL, 1);
   xTaskCreatePinnedToCore(TaskNRF, "TaskNRF", 1024 * 4, NULL, 4, &nrfHandler, 1);
 
   mqttClient->init(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASS);

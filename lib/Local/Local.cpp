@@ -11,11 +11,14 @@ Local::Local(String ssid, String password)
         DPRINTF("Failed to configure SoftAP");
         return;
     }
+    vTaskDelay(500);
 
     if (!WiFi.softAP(ssid.c_str(), password.c_str()))
     {
         DPRINT("Failed to initialize SoftAP");
+        return;
     }
+    vTaskDelay(500);
 
     this->server = new WebServer();
 
@@ -63,11 +66,11 @@ void Local::wifiRequestHandler()
 
     if (this->server->uri() == "/local")
     {
-        setLocal(ssid, password);
+        Configuration::setLocal(ssid, password);
     }
     else if (this->server->uri() == "/ap")
     {
-        setApWifi(ssid, password);
+        Configuration::setApWifi(ssid, password);
     }
 
     this->server->send(200, "text/html", "ok");
