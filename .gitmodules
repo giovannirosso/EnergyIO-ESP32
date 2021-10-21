@@ -1,3 +1,6 @@
 [submodule "tcc-proto"]
 	path = tcc-proto
 	url = git@github.com:mateusm09/tcc-proto.git
+[submodule "settings-page"]
+	path = settings-page
+	url = git@github.com:mateusm09/settings-page.git
