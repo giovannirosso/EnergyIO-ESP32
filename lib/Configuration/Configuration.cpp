@@ -24,7 +24,7 @@ float Configuration::instantMeasure = 0;
 
 int Configuration::totalSensors = 0;
 
-String Configuration::sensor[5] = {"", "", "", "", ""};
+String Configuration::sensor[5] = {"NODE1", "NODE1", "NODE1", "NODE1", "NODE1"};
 
 String Configuration::lastRegistered = "";
 

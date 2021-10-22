@@ -147,7 +147,10 @@ bool RADIO::getRole()
 
 bool RADIO::pairingMode()
 {
-    char *Serial = Configuration::getSerial();
+    char *auxSerial = Configuration::getSerial();
+    char Serial[5];
+    for (int i = 0; i < 5; i++)
+        Serial[i] = auxSerial[i];
 
     Message message(Serial, CHANNEL);
 
