@@ -31,21 +31,19 @@ void RADIO::init()
     nrf24.enableAckPayload();
     nrf24.setPayloadSize(32);
     // nrf24.setChannel(CHANNEL);
-    String aux = Configuration::getSerial();
     uint8_t hubSerial[5];
     uint8_t sensor[5][6];
     for (int i = 0; i < 5; i++)
     {
-        hubSerial[i] = aux[i];
-        sensor[0][i] = Configuration::getSensorSerial()[0][i];
-        sensor[1][i] = Configuration::getSensorSerial()[1][i];
-        sensor[2][i] = Configuration::getSensorSerial()[2][i];
-        sensor[3][i] = Configuration::getSensorSerial()[3][i];
-        sensor[4][i] = Configuration::getSensorSerial()[4][i];
+        sensor[0][i] = Configuration::getSensor()[0][i];
+        sensor[1][i] = Configuration::getSensor()[1][i];
+        sensor[2][i] = Configuration::getSensor()[2][i];
+        sensor[3][i] = Configuration::getSensor()[3][i];
+        sensor[4][i] = Configuration::getSensor()[4][i];
     }
 
-    uint8_t teta[6] = "HUB01";
-    nrf24.openWritingPipe(teta);
+    uint8_t hub[6] = "HUB01";
+    nrf24.openWritingPipe(hub);
     nrf24.openReadingPipe(1, sensor[0]);
     nrf24.openReadingPipe(2, sensor[1]);
     nrf24.openReadingPipe(3, sensor[2]);
@@ -147,10 +145,13 @@ bool RADIO::getRole()
 
 bool RADIO::pairingMode()
 {
-    char *auxSerial = Configuration::getSerial();
+    int sensorNumber = Configuration::getTotalSensors();
     char Serial[5];
     for (int i = 0; i < 5; i++)
-        Serial[i] = auxSerial[i];
+    {
+        Serial[i] = Configuration::getSensor()[4 - sensorNumber][i];
+        printf("%c", Serial[i]);
+    }
 
     Message message(Serial, CHANNEL);
 

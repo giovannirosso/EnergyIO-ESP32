@@ -50,6 +50,7 @@ private:
 
     static int totalSensors;
     static char *serial;
+    static String sensorSerials[5];
     static String sensor[5];
     static int lastPipe;
     static SensorType sensorType[5];
@@ -91,7 +92,9 @@ public:
     static String *getSensorSerial();
     static String getSensorInPipeSerial();
     static String getLastRegistered();
+    static String *getSensor();
     static SensorType getSensorType(int pipe);
+    static int getTotalSensors();
 };
 
 #endif // CONFIGURATION_H

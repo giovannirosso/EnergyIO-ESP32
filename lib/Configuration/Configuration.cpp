@@ -24,7 +24,8 @@ float Configuration::instantMeasure = 0;
 
 int Configuration::totalSensors = 0;
 
-String Configuration::sensor[5] = {"12345", "12345", "12345", "12345", "12345"};
+String Configuration::sensorSerials[5] = {"NODE1", "NODE2", "NODE3", "NODE4", "NODE5"};
+String Configuration::sensor[5] = {"1NODE", "2NODE", "3NODE", "4NODE", "5NODE"};
 
 String Configuration::lastRegistered = "";
 
@@ -114,7 +115,7 @@ void Configuration::readFlash()
                 Serial.println("[FLASH] Sensor Serial " + String(i + 1) + " : " + String(msg.sensorSerial[i]));
                 Serial.println("[FLASH] Tipo " + String(i + 1) + " : " + String(msg.sensorType[i]));
 
-                sensor[i] = msg.sensorSerial[i];
+                sensorSerials[i] = msg.sensorSerial[i];
                 sensorType[i] = msg.sensorType[i];
             }
         }
@@ -235,7 +236,7 @@ void Configuration::setSensor(char *_sensorSerial, SensorType _type)
         return;
     }
     Serial.println("3");
-    sensor[4 - totalSensors] = _sensorSerial;
+    sensorSerials[4 - totalSensors] = _sensorSerial;
     Serial.println("4");
     lastRegistered = _sensorSerial;
     Serial.println("5");
@@ -247,7 +248,7 @@ void Configuration::setSensor(char *_sensorSerial, SensorType _type)
 
     for (int i = 0; i < 5; i++) // escreve os controles ja cadastrados
     {
-        strcpy(msg.sensorSerial[i], sensor[i].c_str());
+        strcpy(msg.sensorSerial[i], sensorSerials[i].c_str());
         msg.sensorType[i] = sensorType[i];
         DPRINTF("SENSOR NUMBER %d\t msg.sensorSerial[%d] = %s\t msg.sensorType[%d] = %d\n", i + 1, i, msg.sensorSerial[i], i, msg.sensorType[i]);
     }
@@ -325,10 +326,15 @@ String Configuration::getLastRegistered()
 String Configuration::getSensorInPipeSerial()
 {
     if (lastPipe != 0)
-        return sensor[lastPipe - 1];
+        return sensorSerials[lastPipe - 1];
 }
 
 String *Configuration::getSensorSerial()
+{
+    return sensorSerials;
+}
+
+String *Configuration::getSensor()
 {
     return sensor;
 }
@@ -351,4 +357,9 @@ String *Configuration::getWifisSsid()
 int *Configuration::getWifisIntensity()
 {
     return Configuration::wifisIntensity;
+}
+
+int Configuration::getTotalSensors()
+{
+    return Configuration::totalSensors;
 }
