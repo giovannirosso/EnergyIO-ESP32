@@ -109,7 +109,7 @@ void Configuration::readFlash()
             Serial.println("\n[FLASH] SetRF Read");
             totalSensors = msg.totalSensors;
             Serial.println("[FLASH] Numero de Sensores: " + String(msg.totalSensors));
-            for (int i = 0; i < totalSensors; i++)
+            for (int i = 4; i >= 0; i--)
             {
                 Serial.println("[FLASH] Sensor Serial " + String(i + 1) + " : " + String(msg.sensorSerial[i]));
                 Serial.println("[FLASH] Tipo " + String(i + 1) + " : " + String(msg.sensorType[i]));
@@ -235,11 +235,11 @@ void Configuration::setSensor(char *_sensorSerial, SensorType _type)
         return;
     }
     Serial.println("3");
-    sensor[totalSensors] = _sensorSerial;
+    sensor[4 - totalSensors] = _sensorSerial;
     Serial.println("4");
     lastRegistered = _sensorSerial;
     Serial.println("5");
-    sensorType[totalSensors] = _type;
+    sensorType[4 - totalSensors] = _type;
     Serial.println("6");
     Configuration::totalSensors++;
 
