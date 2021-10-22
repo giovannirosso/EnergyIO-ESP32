@@ -113,6 +113,18 @@ void TaskBlink(void *pvParameters)
   }
 }
 
+void onApConnection(WiFiEvent_t event)
+{
+  vTaskSuspend(wifiHandler);
+  DPRINTLN("[WIFI] Ap Client Connected");
+}
+
+void onApDisconnection(WiFiEvent_t event)
+{
+  vTaskResume(wifiHandler);
+  DPRINTLN("[WIFI] Ap Client Disconnected");
+}
+
 void WifiDisconnected(WiFiEvent_t event)
 {
   Serial.println("[WIFI] Disconnected from WiFi");
@@ -267,11 +279,10 @@ void setup()
   }
   Configuration::setWifisScan(wifisAmount, wifisIntensity, wifisSsid);
 
-  // DPRINTF("[LOCAL] mode set to WIFI_AP %s\n", WiFi.mode(WIFI_MODE_AP) ? "OK" : "Failed!");
-  // server.connect(Configuration::getApSsid(), Configuration::getApPassword());
-  // DPRINTF("[LOCAL] MODE: %d\n", WiFi.getMode());
-
+  DPRINTF("[LOCAL] mode set to WIFI_AP %s\n", WiFi.mode(WIFI_MODE_AP) ? "OK" : "Failed!");
   localServer = new Local(Configuration::getApSsid(), Configuration::getApPassword());
+  WiFi.onEvent(onApConnection, SYSTEM_EVENT_AP_STACONNECTED);
+  WiFi.onEvent(onApDisconnection, SYSTEM_EVENT_AP_STADISCONNECTED);
 
   mqttClient = new MQTT();
   nrfClient = new RADIO();
