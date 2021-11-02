@@ -30,7 +30,7 @@ String Configuration::sensor[5] = {"1NODE", "2NODE", "3NODE", "4NODE", "5NODE"};
 String Configuration::lastRegistered = "";
 
 SensorType Configuration::sensorType[5] = {
-    SensorType_ENERGY,
+    SensorType_UNDEFINED,
     SensorType_UNDEFINED,
     SensorType_UNDEFINED,
     SensorType_UNDEFINED,

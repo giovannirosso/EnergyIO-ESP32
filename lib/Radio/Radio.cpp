@@ -31,7 +31,7 @@ void RADIO::init()
     nrf24.enableAckPayload();
     nrf24.setPayloadSize(32);
     // nrf24.setChannel(CHANNEL);
-    uint8_t hubSerial[5];
+    
     uint8_t sensor[5][6];
     for (int i = 0; i < 5; i++)
     {
