@@ -24,7 +24,7 @@ Local::Local(String ssid, String password)
 
     this->server->on("/local", HTTP_POST, [this]()
                      { wifiRequestHandler(); });
-    this->server->on("/hub", HTTP_POST, [this]()
+    this->server->on("/ap", HTTP_POST, [this]()
                      { wifiRequestHandler(); });
     this->server->on("/save", HTTP_POST, [this]()
                      { saveRequestHandler(); });
@@ -34,35 +34,42 @@ Local::Local(String ssid, String password)
     this->server->serveStatic("/", SPIFFS, "/");
 
     this->server->enableCORS();
+    this->server->enableCrossOrigin(true);
     this->server->begin(SERVER_PORT);
 }
 
 void Local::wifiRequestHandler()
 {
 
-    DPRINTF("[LOCAL] New request");
+    DPRINTF("[LOCAL] New request\n");
     DPRINTF("Path: %s\n", this->server->uri());
 
     if (this->server->method() != HTTP_POST)
     {
+        DPRINTF("Invalid HTTP method\n");
         this->server->send(400, "text/html", "Invalid method");
         return;
     }
 
     if (!this->server->hasArg("ssid"))
     {
+        DPRINTF("SSID arg not present\n");
         this->server->send(400, "text/html", "Invalid body");
         return;
     }
 
     if (!this->server->hasArg("password"))
     {
+        DPRINTF("Password arg not present\n");
         this->server->send(400, "text/html", "Invalid body");
         return;
     }
 
     String ssid = this->server->arg("ssid");
     String password = this->server->arg("password");
+
+    DPRINTF("SSID: %s\n", ssid.c_str());
+    DPRINTF("Password: %s\n", password.c_str());
 
     if (this->server->uri() == "/local")
     {
@@ -78,6 +85,9 @@ void Local::wifiRequestHandler()
 
 void Local::saveRequestHandler()
 {
+    DPRINTF("[LOCAL] New request");
+    DPRINTF("Path: %s\n", this->server->uri());
+
     if (this->server->method() != HTTP_POST)
     {
         this->server->send(400, "text/html", "Invalid method");

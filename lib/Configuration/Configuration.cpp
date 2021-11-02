@@ -87,17 +87,9 @@ void Configuration::readFlash()
 {
     Preferences prefs;
 
-    if (prefs.begin(PREFERENCES_NAMESPACE, true))
-    {
-        Serial.println("[NVS_FLASH] INIT");
-        length = prefs.getBytes("localwifi", data, 1024);
-        // readLocalWifi(); //TODO:
+    readApWifi();
+    readLocalWifi();
 
-        length = prefs.getBytes("apwifi", data, 1024);
-        // readApWifi();
-
-        prefs.end();
-    }
     if (prefs.begin(SENSORS_PROPRETIES, true))
     {
         length = prefs.getBytes("sensor", data, 1024);
@@ -162,8 +154,11 @@ void Configuration::readApWifi()
         String ssid = prefs.getString("/ap/ssid", DEFAULT_AP_SSID);
         String password = prefs.getString("/ap/password", DEFAULT_AP_PASSWORD);
 
-        strcpy(localSsid, ssid.c_str());
-        strcpy(localPass, password.c_str());
+        DPRINTF("[NVS_FLASH] AP SSID: %s\n", ssid.c_str());
+        DPRINTF("[NVS_FLASH] AP PASS: %s\n", password.c_str());
+
+        strcpy(apSsid, ssid.c_str());
+        strcpy(apPass, password.c_str());
         prefs.end();
     }
 }
@@ -189,6 +184,9 @@ void Configuration::readLocalWifi()
     {
         String ssid = prefs.getString("/local/ssid", DEFAULT_AP_SSID);
         String password = prefs.getString("/local/password", DEFAULT_AP_PASSWORD);
+
+        DPRINTF("[NVS_FLASH] LOCAL SSID: %s\n", ssid.c_str());
+        DPRINTF("[NVS_FLASH] LOCAL PASS: %s\n", password.c_str());
 
         strcpy(localSsid, ssid.c_str());
         strcpy(localPass, password.c_str());
