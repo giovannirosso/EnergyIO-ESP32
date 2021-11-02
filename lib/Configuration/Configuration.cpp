@@ -149,6 +149,7 @@ void Configuration::setApWifi(String _apSsid, String _apPass)
     {
         prefs.putString("/ap/ssid", _apSsid);
         prefs.putString("/ap/password", _apPass);
+        prefs.end();
     }
 }
 
@@ -163,6 +164,7 @@ void Configuration::readApWifi()
 
         strcpy(localSsid, ssid.c_str());
         strcpy(localPass, password.c_str());
+        prefs.end();
     }
 }
 
@@ -175,6 +177,7 @@ void Configuration::setLocal(String _apSsid, String _apPass)
     {
         prefs.putString("/local/ssid", _apSsid);
         prefs.putString("/local/password", _apPass);
+        prefs.end();
     }
 }
 
@@ -189,6 +192,7 @@ void Configuration::readLocalWifi()
 
         strcpy(localSsid, ssid.c_str());
         strcpy(localPass, password.c_str());
+        prefs.end();
     }
 }
 
