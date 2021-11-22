@@ -181,7 +181,6 @@ void TaskWifi(void *pvParameters)
 
 void TaskSoftAp(void *pvParameters)
 {
-  // server.connect(Configuration::getApSsid(), Configuration::getApPassword());
   for (;;)
   {
     xSemaphoreTake(sema_SoftAP, portMAX_DELAY); // whiles server.loop() is running no other mqtt operations should be in process
@@ -299,7 +298,6 @@ void setup()
 
   Serial.println("[SETUP] END\n");
 }
-
 
 void loop()
 {

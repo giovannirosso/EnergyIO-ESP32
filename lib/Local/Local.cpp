@@ -2,21 +2,19 @@
 
 Local::Local(String ssid, String password)
 {
-
-    IPAddress localIp(192, 168, 4, 1);
-    IPAddress subnetMask(255, 255, 255, 0);
-
-    if (!WiFi.softAPConfig(localIp, localIp, subnetMask))
-    {
-        DPRINTF("Failed to configure SoftAP");
-        return;
-    }
+    IPAddress local_ip(192, 168, 4, 1);
+    // IPAddress gateway(192, 168, 4, 1);
+    IPAddress subnet(255, 255, 255, 0);
+    if (!WiFi.softAPConfig(local_ip, local_ip, subnet))
+        DLPRINTLN("[AP WIFI] AP Config Failed");
     vTaskDelay(500);
-
-    if (!WiFi.softAP(ssid.c_str(), password.c_str()))
+    if (WiFi.softAP(ssid.c_str(), password.c_str()))
     {
-        DPRINTF("Failed to initialize SoftAP");
-        return;
+        DLPRINTLN("");
+        IPAddress myIP = WiFi.softAPIP();
+        DLPRINTLN("[AP WIFI] Network " + ssid + " running");
+        DPRINT("[AP WIFI] AP IP address: ");
+        DPRINTLN(myIP);
     }
     vTaskDelay(500);
 

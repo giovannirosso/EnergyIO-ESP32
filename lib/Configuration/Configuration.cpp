@@ -182,8 +182,8 @@ void Configuration::readLocalWifi()
 
     if (prefs.begin(PREFERENCES_NAMESPACE))
     {
-        String ssid = prefs.getString("/local/ssid", DEFAULT_AP_SSID);
-        String password = prefs.getString("/local/password", DEFAULT_AP_PASSWORD);
+        String ssid = prefs.getString("/local/ssid", DEFAULT_LOCAL_SSID);
+        String password = prefs.getString("/local/password", DEFAULT_LOCAL_PASSWORD);
 
         DPRINTF("[NVS_FLASH] LOCAL SSID: %s\n", ssid.c_str());
         DPRINTF("[NVS_FLASH] LOCAL PASS: %s\n", password.c_str());
