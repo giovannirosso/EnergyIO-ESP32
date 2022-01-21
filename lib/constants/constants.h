@@ -22,8 +22,8 @@
 
 #define CLIENT_ID "HubModule"
 
-#define SSID_LOCAL "Rosso"
-#define PASSWORD_LOCAL "055A64F7"
+#define SSID_LOCAL "SSID"
+#define PASSWORD_LOCAL "PASSWORD"
 
 #define TOPIC_REGISTER_REQUEST "register/request"
 #define TOPIC_REGISTER_REPORT "register/report"
