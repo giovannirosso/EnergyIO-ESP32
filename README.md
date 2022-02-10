@@ -4,7 +4,11 @@ ENERGY IO: SISTEMA DE MONITORAMENTO DE GASTOS RESIDENCIAIS – ÁGUA E LUZ
 
 Trabalho de Conclusão de Curso apresentado ao Curso de Engenharia Eletrônica da Universidade Tecnológica Federal do Paraná - UTFPR Campus Curitiba, como requisito parcial para a obtenção do título de Bacharel em Engenharia Eletrônica.
 
-## Repositórios que compoem esse projeto:
+# PDF da dissertação 📚
+
+<a href="https://github.com/giovannirosso/EnergyIO-ESP32/blob/main/TCC2%20-%20EnergyIO%20-%20Gabriel%20Lido%20-%20Giovanni%20Rosso%20-%20Mateus%20Mello.pdf" class="image fit"><img src="https://bibliotecadaeca.files.wordpress.com/2012/12/pdf-logo.png?w=256" alt=""></a>
+
+# Repositórios que compoem esse projeto:
 
 ## Módulos de monitoramento de gasto de Energia e Água utilizando STM32 e NRF24L01
 [![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=gabriel-lido&theme=dark&repo=EnergyIO_STM32)](https://github.com/Gabriel-Lido/energyio_stm32) [![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=gabriel-lido&theme=dark&repo=Water_Sensor-STM32)](https://github.com/Gabriel-Lido/Water_sensor-stm32)
